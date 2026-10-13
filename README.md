@@ -1,6 +1,6 @@
 # Dateline Atlas
 
-World news on a relief globe. Claude sweeps about 35 outlets in 14 languages twice a day (5:52 AM and 5:52 PM New York time), translates the headlines, groups reports of the same event, and scores each story for reliability and for how differently outlets frame it.
+World news on a relief globe. Twice a day (5:52 AM and 5:52 PM New York time) a news sweep reads about 50 outlets in 17 languages, translates the headlines, groups reports of the same event, and scores each story for reliability and for how differently outlets frame it. The sweep runs on Noah's PC with a local AI model (EMA, using Gemma); when the PC misses one, Claude runs it instead. The app's Sources tab says which ran the latest sweep.
 
 This repository is the installable phone app. It is a web app (PWA): Chrome installs it like any other Android app, it opens full screen from its own icon, and it keeps working offline with the last sweep it downloaded.
 
@@ -21,7 +21,7 @@ The APK is the same app with the same automatic updates. Publishing it on Google
 ## How the news updates
 
 - `data/feed.json` holds every current story plus the latest sweep's status.
-- After each sweep, the scheduled task replaces `data/feed.json` with the new stories (built with `tools/make_feed.py` from an export of the Atlas database).
+- After each sweep, `data/feed.json` is replaced with the new stories: by Wire, the news agent in Local HQ on Noah's PC, or by Claude's fallback sweep (built with `tools/make_feed.py` from an export of the Atlas database).
 - The app checks for a new feed when you open it and every 15 minutes while it is open, and shows "New sweep landed" when one arrives. Offline, it shows the saved sweep and the header reads **Saved**.
 - National and international stories stay for 30 days after the event; local and regional ones for 7.
 
@@ -48,4 +48,4 @@ Everything in this repository is public, including the stories in `data/feed.jso
 
 ## Credits
 
-Land relief and vegetation tints: Natural Earth shaded relief (public domain). Ocean depth: NOAA ETOPO global relief model; seafloor ridges and trenches: NOAA ETOPO1 (public domain). Coastlines, lakes and borders: Natural Earth 1:110m and 1:50m (public domain). D3 by Mike Bostock, ISC license (`lib/d3-LICENSE.txt`). Headlines belong to the outlets that published them; every report links to its original. Translations, reliability scores and framing notes are Claude's judgments and can be wrong.
+Land relief and vegetation tints: Natural Earth shaded relief (public domain). Ocean depth: NOAA ETOPO global relief model; seafloor ridges and trenches: NOAA ETOPO1 (public domain). Coastlines, lakes and borders: Natural Earth 1:110m and 1:50m (public domain). D3 by Mike Bostock, ISC license (`lib/d3-LICENSE.txt`). Headlines belong to the outlets that published them; every report links to its original. Translations, reliability scores and framing notes are an AI model's judgments (EMA's or Claude's) and can be wrong.

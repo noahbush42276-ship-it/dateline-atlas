@@ -1042,7 +1042,7 @@ function methodBlock(){
       h("dt", {text:"Framing split (0–100)"}), h("dd", {text:"How differently outlets tell the same story: who is blamed, which words are used, what is put first and what is left out."}),
       h("dt", {text:"Loaded language (0–3)"}), h("dd", {text:"The outlet's own wording in its headline, not quotes it attributes to others. 0 is neutral wire language; 3 is an openly partisan label."}),
       h("dt", {text:"Ownership"}), h("dd", {text:"State: run or funded by a government. Public: public-service or nonprofit broadcaster. Commercial: privately owned. Independent: reader-funded or working in exile."}),
-      h("dt", {text:"Translation and limits"}), h("dd", {text:"Claude translates headlines and makes these assessments. They are judgments, not verdicts, and they can be wrong; each report links to the original. National and international stories drop off 30 days after the event date, local and regional ones after 7."}),
+      h("dt", {text:"Translation and limits"}), h("dd", {text:"An AI model translates the headlines and makes these assessments: Claude, or EMA (Gemma, a local model) when the sweep runs on Noah's PC; Sources says which ran the latest sweep. The outlet, country and owner counts behind the reliability score are counted by code. These are judgments, not verdicts, and they can be wrong; each report links to the original. National and international stories drop off 30 days after the event date, company and AI news after 14, local and regional stories after 7."}),
       h("dt", {text:"Map data"}), h("dd", {text:"Land relief and vegetation tints from Natural Earth's shaded relief. Ocean depth from NOAA's ETOPO global relief model, with seafloor ridges and trenches from NOAA ETOPO1. Coastlines, lakes and borders from Natural Earth 1:50m."})
     ));
 }
@@ -1161,7 +1161,7 @@ function renderSources(){
       h("div", {class:"sw-counts"}, cnt(m.newEvents, "New"), cnt(m.newLocalEvents, "Local"), cnt(m.updatedEvents, "Updated"), cnt(m.pruned, "Dropped")),
       m.note ? h("p", {class:"note", text:str(m.note, 600)}) : null,
       sweepClock(),
-      h("p", {class:"note", text:"Claude sweeps " + (read.length || "about 35") + " outlets" + (langs ? " in " + langs + " languages" : "") + " twice a day, at 5:52 AM and 5:52 PM New York time, then adds local-news searches. Each sweep takes about 40 minutes to land; the app picks it up within 15 minutes, or as soon as you reopen it."}),
+      h("p", {class:"note", text:(m.sweptBy === "EMA" ? "EMA, the local AI on Noah's PC," : "Claude") + " swept " + (read.length || "about 35") + " outlets" + (langs ? " in " + langs + " languages" : "") + " for the latest sweep. Sweeps run twice a day, at 5:52 AM and 5:52 PM New York time. The app picks up a new sweep within 15 minutes of it landing, or as soon as you reopen it."}),
       failed.length ? h("p", {class:"note", text:"Not readable in the last sweep: " + failed.join(", ") + "."}) : null),
     h("h2", {style:"margin-top:16px", text:"Outlets in this window · " + rows.length}),
     rows.length ? h("ul", {class:"olist"}, rows.map(o => { const avg = mean(o.loaded); return h("li", {class:"orow"},
