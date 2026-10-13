@@ -1,0 +1,18 @@
+{
+  "id": "./",
+  "name": "Dateline Atlas",
+  "short_name": "Atlas",
+  "description": "World news on a relief globe, swept from about 35 outlets in 14 languages twice a day, with reliability and framing checks.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0c1117",
+  "theme_color": "#141a21",
+  "categories": ["news"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
