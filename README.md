@@ -27,6 +27,12 @@ The APK is the same app with the same automatic updates. Publishing it on Google
 
 Everything in this repository is public, including the stories in `data/feed.json`.
 
+## Local weather
+
+The pill under the totals on the globe shows the weather where your phone is. Tap it, then **Use my location**; your phone asks first. After that the app updates the forecast each time you open it (and every 30 minutes while it is open). You can also **Search a place** instead, and switch between °F and °C.
+
+Your location is never sent to this site or saved in this repository. The phone sends it only to Open-Meteo (the forecast) and BigDataCloud (the town name), and keeps the last forecast on the phone so it shows at once and offline. To stop, turn off location for this site in your phone's settings, or pick a place with Search.
+
 ## Publishing this folder by hand
 
 1. On github.com, create a **public** repository named `dateline-atlas`.
@@ -38,7 +44,7 @@ Everything in this repository is public, including the stories in `data/feed.jso
 
 | Path | What it is |
 | --- | --- |
-| `index.html` | The app: globe, story strip, Stories / Bias / Sources tabs, story reports |
+| `index.html` | The app: globe, story strip, local weather, Stories / Bias / Sources tabs, story reports |
 | `data/feed.json` | The stories, replaced after every sweep |
 | `sw.js` | Service worker: offline copy of the app and the last feed |
 | `manifest.webmanifest`, `icons/` | What Android uses to install the app |
@@ -48,4 +54,4 @@ Everything in this repository is public, including the stories in `data/feed.jso
 
 ## Credits
 
-Land relief and vegetation tints: Natural Earth shaded relief (public domain). Ocean depth: NOAA ETOPO global relief model; seafloor ridges and trenches: NOAA ETOPO1 (public domain). Coastlines, lakes and borders: Natural Earth 1:110m and 1:50m (public domain). D3 by Mike Bostock, ISC license (`lib/d3-LICENSE.txt`). Headlines belong to the outlets that published them; every report links to its original. Translations, reliability scores and framing notes are an AI model's judgments (EMA's or Claude's) and can be wrong.
+Land relief and vegetation tints: Natural Earth shaded relief (public domain). Ocean depth: NOAA ETOPO global relief model; seafloor ridges and trenches: NOAA ETOPO1 (public domain). Coastlines, lakes and borders: Natural Earth 1:110m and 1:50m (public domain). D3 by Mike Bostock, ISC license (`lib/d3-LICENSE.txt`). Weather data by Open-Meteo.com (CC BY 4.0); place names by BigDataCloud. Headlines belong to the outlets that published them; every report links to its original. Translations, reliability scores and framing notes are an AI model's judgments (EMA's or Claude's) and can be wrong.

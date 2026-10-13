@@ -342,6 +342,90 @@ details.method dd{margin:0}
 }
 @media (max-width:380px){ .kpis{display:none} .brand h1{font-size:20px} }
 @media (prefers-reduced-motion: reduce){ .dot.live{animation:none} .sheet.in{animation:none} }
+
+/* ---------- local weather: a pill under the totals; tap for the forecast where the phone is ---------- */
+:root{--wx-sun:#d18f00;--wx-rain:#1f6fd1;--wx-cloud:#b3bdc7;--wx-cloud-2:#7f8c99;--wx-moon:#8a96a3;--wx-pin:#2446c8;--wx-bar-a:#7fb7d4;--wx-bar-b:#eb6834}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){--wx-sun:#f4c24f;--wx-rain:#72adf4;--wx-cloud:#6f7c89;--wx-cloud-2:#a7b2bd;--wx-moon:#c9d2dc;--wx-pin:#8ea4ff;--wx-bar-a:#4f8fc0;--wx-bar-b:#e5855a} }
+:root[data-theme="dark"]{--wx-sun:#f4c24f;--wx-rain:#72adf4;--wx-cloud:#6f7c89;--wx-cloud-2:#a7b2bd;--wx-moon:#c9d2dc;--wx-pin:#8ea4ff;--wx-bar-a:#4f8fc0;--wx-bar-b:#e5855a}
+.wxpill{position:absolute;left:16px;top:100px;z-index:3;display:inline-flex;align-items:center;gap:6px;max-width:calc(100% - 92px);border:1px solid var(--rule);background:var(--glass);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-radius:999px;padding:3px 12px 3px 5px;font-size:12.5px;color:var(--ink);white-space:nowrap}
+.wxpill[aria-expanded="true"]{border-color:var(--accent)}
+.wxpill .wx-i{width:24px;height:24px}
+#wxPillT{display:inline-flex;align-items:baseline;gap:6px;min-width:0}
+#wxPillT b{font:600 14px/1 var(--f-ui);font-variant-numeric:tabular-nums}
+#wxPillT span{color:var(--ink-2);overflow:hidden;text-overflow:ellipsis}
+#wxPillT .wxp-ask{color:var(--ink);font-weight:600}
+.wxpanel{position:absolute;left:12px;top:136px;z-index:5;width:min(372px,calc(100% - 24px));max-height:calc(100% - 146px);overflow:auto;overscroll-behavior:contain;display:grid;gap:10px;background:var(--surface);border:1px solid var(--rule);border-radius:12px;box-shadow:var(--card-shadow);padding:12px 14px 11px;font-size:12.5px}
+.wxpanel[hidden]{display:none!important}
+@media (max-width:380px){ .wxpill{top:54px} .wxpanel{top:90px;max-height:calc(100% - 100px)} }
+
+.wx-i{display:block;flex:none;overflow:visible}
+.wx-i .s{fill:var(--wx-sun)} .wx-i .sr{stroke:var(--wx-sun);fill:none}
+.wx-i .m{fill:var(--wx-moon)}
+.wx-i .c{fill:var(--wx-cloud)} .wx-i .cf{stroke:var(--surface);stroke-width:1.3;paint-order:stroke}
+.wx-i .r{stroke:var(--wx-rain);fill:none} .wx-i .sn{fill:var(--wx-rain)} .wx-i .f{stroke:var(--wx-cloud-2);fill:none}
+.wx-i .pn{fill:var(--wx-pin)} .wx-i .pnc{fill:var(--surface)}
+
+.wx-head{display:flex;align-items:flex-start;gap:10px}
+.wx-place{display:grid;gap:1px;min-width:0;flex:1}
+.wx-place small{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+.wx-place b{font:600 19px/1.15 var(--f-display);font-variation-settings:"opsz" 24;text-wrap:balance}
+.wx-place span{color:var(--ink-3);font-size:12px}
+.wx-x{flex:none;width:30px;height:30px;margin:-4px -6px 0 0;border:0;border-radius:8px;background:none;color:var(--ink-3);font-size:20px;line-height:1}
+.wx-x:hover{background:var(--surface-2);color:var(--ink)}
+
+.wx-now{display:flex;align-items:center;gap:9px}
+.wx-now .wx-i{width:40px;height:40px}
+.wx-tmp{font:600 38px/1 var(--f-display);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.wx-txt{display:grid;gap:2px;min-width:0}
+.wx-txt span:first-child{font-weight:600}
+.wx-txt .mono{font-size:10.5px;color:var(--ink-3)}
+
+.wx-hours{list-style:none;margin:0 -6px;padding:2px 0;display:flex;overflow-x:auto;scrollbar-width:none;scroll-snap-type:x proximity;overscroll-behavior-x:contain;touch-action:pan-x;border-block:1px solid var(--rule)}
+.wx-hours::-webkit-scrollbar{display:none}
+.wx-h{flex:0 0 48px;display:grid;justify-items:center;gap:3px;padding:6px 0 5px;scroll-snap-align:start;border-radius:6px}
+.wx-h .wx-t{font:500 10.5px/1.2 var(--f-mono);color:var(--ink-3);white-space:nowrap}
+.wx-h.now{background:var(--accent-wash)}
+.wx-h.now .wx-t{color:var(--ink);font-weight:600}
+.wx-h.d0{box-shadow:inset 1px 0 0 var(--rule);border-radius:0}
+.wx-h.d0 .wx-t{font:600 10.5px/1.2 var(--f-ui);color:var(--ink-2)}
+.wx-h .wx-i{width:22px;height:22px}
+.wx-h b{font:600 13px/1.1 var(--f-ui);font-variant-numeric:tabular-nums}
+.wx-h .wx-p{font:500 10px/1.1 var(--f-mono);color:var(--wx-rain);min-height:11px}
+
+.wx-days{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.wx-days li{display:grid;grid-template-columns:44px 22px 30px 34px minmax(40px,1fr) 34px;align-items:center;gap:6px;padding:3px 0}
+.wx-days .wx-i{width:22px;height:22px}
+.wx-dn{font-weight:600}
+.wx-dp{font:500 10.5px/1 var(--f-mono);color:var(--wx-rain);text-align:right}
+.wx-lo,.wx-hi{font-variant-numeric:tabular-nums;text-align:right}
+.wx-lo{color:var(--ink-3)}
+.wx-hi{font-weight:600}
+.wx-bar{position:relative;height:5px;border-radius:3px;background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--rule)}
+.wx-bar i{position:absolute;top:0;bottom:0;border-radius:3px;background:linear-gradient(90deg,var(--wx-bar-a),var(--wx-bar-b))}
+
+.wx-intro{margin:0;color:var(--ink-2);line-height:1.45}
+.wx-note{margin:0;color:var(--ink-2);font-size:12px;line-height:1.4}
+.wx-acts{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.wx-btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--rule);background:var(--surface);border-radius:8px;padding:7px 11px;font-size:12.5px;font-weight:600;color:var(--ink)}
+.wx-btn .wx-i{width:16px;height:16px}
+.wx-btn.main{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+.wx-btn.main .wx-i .pn{fill:var(--surface)} .wx-btn.main .wx-i .pnc{fill:var(--ink)}
+.wx-btn[disabled]{opacity:.6}
+.wx-unit{margin-left:auto;display:inline-flex;border:1px solid var(--rule);border-radius:8px;overflow:hidden}
+.wx-unit button{border:0;background:none;padding:6px 9px;font-size:12px;color:var(--ink-2)}
+.wx-unit button+button{border-left:1px solid var(--rule)}
+.wx-unit button[aria-pressed="true"]{background:var(--accent-wash);color:var(--ink);font-weight:600}
+.wx-search{display:flex;gap:6px}
+.wx-search input{flex:1;min-width:0;border:1px solid var(--rule);background:var(--surface-2);border-radius:8px;padding:7px 10px;font-size:14px}
+.wx-res{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.wx-res button{width:100%;display:grid;gap:1px;text-align:left;border:0;background:none;border-radius:8px;padding:7px 8px}
+.wx-res button:hover{background:var(--surface-2)}
+.wx-res b{font-weight:600}
+.wx-res span{color:var(--ink-3);font-size:12px}
+.wx-src{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:10.5px;color:var(--ink-3)}
+.wx-src a{color:var(--ink-3)}
+.wx-src .dot{width:6px;height:6px;border-radius:50%;background:var(--warn);flex:none}
+.wx-src .dot.ok{background:var(--good)}
 </style>
 </head>
 <body>
@@ -369,6 +453,8 @@ details.method dd{margin:0}
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="8" cy="8" r="6.2"/><path d="M8 7.2v4"/><circle cx="8" cy="4.9" r=".5" fill="currentColor"/></svg>
       </button>
     </div>
+    <button type="button" class="wxpill" id="wxPill" aria-expanded="false" aria-controls="wxPanel"><span id="wxPillI"></span><span id="wxPillT"></span></button>
+    <section class="wxpanel" id="wxPanel" role="dialog" aria-label="Local weather" hidden></section>
     <div class="keypop" id="keypop" role="dialog" aria-label="Map key" hidden><h2>Map key</h2><div class="lg-grid" id="lgGrid"></div></div>
     <div class="car" id="car" aria-label="Stories from the latest sweeps"></div>
   </section>
@@ -1330,6 +1416,368 @@ setInterval(() => { if (!document.hidden) loadFeed(); }, 15 * 6e4);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) loadFeed(); });
 window.addEventListener("online", loadFeed);
 if ("serviceWorker" in navigator) window.addEventListener("load", () => { navigator.serviceWorker.register("sw.js").catch(() => {}); });
+})();
+</script>
+<script>
+/* ---------- local weather: the forecast for where the phone is ----------
+   The phone asks for its location (only after a tap, or on its own when this site already has permission),
+   then fetches the forecast from Open-Meteo and the place name from BigDataCloud, straight from the phone.
+   Nothing about the location goes to the news feed or to GitHub. The last forecast is kept on the phone,
+   so it shows at once and offline. */
+(() => {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const pill = $("wxPill"), pillI = $("wxPillI"), pillT = $("wxPillT"), panel = $("wxPanel");
+  if (!pill || !panel) return;
+  const KEY = "atlasm-wx", STALE = 20 * 60e3, EVERY = 30 * 60e3;
+  const st = { mode: "none", loc: null, data: null, at: 0, unit: null, busy: false, err: "", perm: "unknown", open: false, search: false, results: null };
+
+  /* ---- saved state (per phone) ---- */
+  const num = (v) => (typeof v === "number" && Number.isFinite(v) ? v : null);
+  const str = (v, n) => (typeof v === "string" ? v.slice(0, n || 80) : "");
+  function okLoc(l) { return l && num(l.lat) !== null && num(l.lng) !== null && Math.abs(l.lat) <= 90 && Math.abs(l.lng) <= 180; }
+  try {
+    const s = JSON.parse(localStorage.getItem(KEY) || "null");
+    if (s && typeof s === "object") {
+      if (s.mode === "gps" || s.mode === "place") st.mode = s.mode;
+      if (okLoc(s.loc)) st.loc = { lat: s.loc.lat, lng: s.loc.lng, name: str(s.loc.name), area: str(s.loc.area), cc: str(s.loc.cc, 2) };
+      if (s.unit === "F" || s.unit === "C") st.unit = s.unit;
+      if (s.data && typeof s.data === "object" && Array.isArray(s.data.hours)) { st.data = s.data; st.at = num(s.at) || 0; }
+      if (!st.loc) st.mode = "none";
+    }
+  } catch (e) {}
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify({ mode: st.mode, loc: st.loc, unit: st.unit, data: st.data, at: st.at })); } catch (e) {}
+  }
+
+  /* ---- units: what the phone's region uses (Fahrenheit in the US), unless chosen with the °F / °C switch ---- */
+  const FAHRENHEIT = /^(US|LR|MM|PR|GU|VI|AS|MP|BS|BZ|KY|PW)$/;
+  function unit() {
+    if (st.unit) return st.unit;
+    const m = /[-_]([A-Za-z]{2})\b/.exec(navigator.language || "");
+    const cc = m ? m[1].toUpperCase() : st.mode === "gps" && st.loc ? st.loc.cc : "";
+    return FAHRENHEIT.test(cc || "") ? "F" : "C";
+  }
+  const deg = (c) => (c === null ? "–" : Math.round(unit() === "F" ? c * 9 / 5 + 32 : c) + "°");
+  const speed = (kmh) => (kmh === null ? "" : unit() === "F" ? Math.round(kmh / 1.609) + " mph" : Math.round(kmh) + " km/h");
+
+  /* ---- icons (same drawings as the Atlas weather card) ---- */
+  const SUN = '<circle cx="12" cy="12" r="4.3" class="s"/><path class="sr" stroke-width="1.8" stroke-linecap="round" d="M12 2.6v2.3M12 19.1v2.3M2.6 12h2.3M19.1 12h2.3M5.35 5.35l1.6 1.6M17.05 17.05l1.6 1.6M5.35 18.65l1.6-1.6M17.05 6.95l1.6-1.6"/>';
+  const MOON = '<path class="m" d="M14.6 3.2a8.6 8.6 0 1 0 6.2 12.9 7 7 0 0 1-6.2-12.9z"/>';
+  const CLOUD_D = "M7 19.5h10.2a4.3 4.3 0 0 0 .5-8.57 5.8 5.8 0 0 0-11.1 1.4A3.6 3.6 0 0 0 7 19.5z";
+  const cloud = (t, front) => '<path class="c' + (front ? " cf" : "") + '" transform="' + (t || "") + '" d="' + CLOUD_D + '"/>';
+  const ICONS = {
+    sun: SUN, moon: MOON,
+    psun: '<g transform="translate(-2.6 -3.4) scale(.82)">' + SUN + "</g>" + cloud("translate(3.2 3.6) scale(.86)", true),
+    pmoon: '<g transform="translate(-1.6 -3) scale(.74)">' + MOON + "</g>" + cloud("translate(3.2 3.6) scale(.86)", true),
+    cloud: cloud("translate(-.4 -1.2) scale(1.04)"),
+    rain: cloud("translate(0 -4.6)") + '<path class="r" stroke-width="1.8" stroke-linecap="round" d="M8.6 17.8l-1.3 3M12.6 17.8l-1.3 3M16.6 17.8l-1.3 3"/>',
+    storm: cloud("translate(0 -4.6)") + '<path class="s" d="M13.1 15.2l-3.6 4.6h2.7l-1.3 3.6 4.3-5.3h-2.8l1.6-2.9z"/>',
+    snow: cloud("translate(0 -4.6)") + '<g class="sn"><circle cx="8" cy="18.6" r="1.15"/><circle cx="12" cy="20.6" r="1.15"/><circle cx="16" cy="18.6" r="1.15"/></g>',
+    fog: cloud("translate(1.6 -5.2) scale(.86)") + '<path class="f" stroke-width="1.8" stroke-linecap="round" d="M3.5 15.5h17M5.5 19h13M3.5 22.5h12"/>',
+    pin: '<path class="pn" d="M12 21.5s-6.5-6.2-6.5-11.3a6.5 6.5 0 0 1 13 0c0 5.1-6.5 11.3-6.5 11.3z"/><circle cx="12" cy="10.2" r="2.4" class="pnc"/>'
+  };
+  function icon(kind, label) {
+    const s = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    s.setAttribute("viewBox", "0 0 24 24"); s.setAttribute("class", "wx-i");
+    if (label) { s.setAttribute("role", "img"); s.setAttribute("aria-label", label); } else s.setAttribute("aria-hidden", "true");
+    s.innerHTML = ICONS[kind] || ICONS.cloud;
+    return s;
+  }
+  /* WMO weather codes, as Open-Meteo reports them */
+  function sky(code, day) {
+    const c = num(code);
+    if (c === 0) return [day ? "sun" : "moon", day ? "Sunny" : "Clear"];
+    if (c === 1) return [day ? "psun" : "pmoon", day ? "Mostly sunny" : "Mostly clear"];
+    if (c === 2) return [day ? "psun" : "pmoon", "Partly cloudy"];
+    if (c === 3) return ["cloud", "Cloudy"];
+    if (c === 45 || c === 48) return ["fog", "Fog"];
+    if (c >= 51 && c <= 55) return ["rain", "Drizzle"];
+    if (c === 56 || c === 57) return ["snow", "Freezing drizzle"];
+    if (c === 61) return ["rain", "Light rain"];
+    if (c === 63) return ["rain", "Rain"];
+    if (c === 65) return ["rain", "Heavy rain"];
+    if (c === 66 || c === 67) return ["snow", "Freezing rain"];
+    if (c === 71) return ["snow", "Light snow"];
+    if (c === 73 || c === 77) return ["snow", "Snow"];
+    if (c === 75) return ["snow", "Heavy snow"];
+    if (c === 80) return ["rain", "Showers"];
+    if (c === 81 || c === 82) return ["rain", "Heavy showers"];
+    if (c === 85 || c === 86) return ["snow", "Snow showers"];
+    if (c === 95) return ["storm", "Thunderstorms"];
+    if (c === 96 || c === 99) return ["storm", "Thunderstorms, hail"];
+    return ["cloud", "—"];
+  }
+
+  /* ---- reading Open-Meteo (always Celsius and km/h; converted for display) ---- */
+  function readForecast(j) {
+    const off = num(j && j.utc_offset_seconds) || 0;
+    const at = (t) => { const v = Date.parse(String(t) + "Z"); return Number.isFinite(v) ? v - off * 1000 : null; };
+    const c = (j && j.current) || {}, H = (j && j.hourly) || {}, D = (j && j.daily) || {};
+    const hours = [];
+    const ht = Array.isArray(H.time) ? H.time : [];
+    for (let i = 0; i < ht.length && hours.length < 60; i++) {
+      const t = at(ht[i]), temp = num((H.temperature_2m || [])[i]);
+      if (t === null || temp === null) continue;
+      hours.push({ t, temp, pop: num((H.precipitation_probability || [])[i]), code: num((H.weather_code || [])[i]), day: (H.is_day || [])[i] === 1 });
+    }
+    const days = [];
+    const dt = Array.isArray(D.time) ? D.time : [];
+    for (let i = 0; i < dt.length && days.length < 6; i++) {
+      const hi = num((D.temperature_2m_max || [])[i]), lo = num((D.temperature_2m_min || [])[i]);
+      if (hi === null || lo === null || typeof dt[i] !== "string") continue;
+      days.push({ date: dt[i].slice(0, 10), hi, lo, pop: num((D.precipitation_probability_max || [])[i]), code: num((D.weather_code || [])[i]) });
+    }
+    const now = { t: at(c.time), temp: num(c.temperature_2m), feels: num(c.apparent_temperature), code: num(c.weather_code), day: c.is_day === 1, wind: num(c.wind_speed_10m) };
+    if (now.temp === null || hours.length < 6) throw new Error("incomplete forecast");
+    return { off, now, hours, days };
+  }
+  async function fetchForecast(loc) {
+    const q = new URLSearchParams({
+      latitude: loc.lat.toFixed(3), longitude: loc.lng.toFixed(3),
+      current: "temperature_2m,apparent_temperature,weather_code,is_day,wind_speed_10m",
+      hourly: "temperature_2m,precipitation_probability,weather_code,is_day",
+      daily: "weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max",
+      timezone: "auto", forecast_days: "5"
+    });
+    const r = await fetch("https://api.open-meteo.com/v1/forecast?" + q, { cache: "no-store" });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    return readForecast(await r.json());
+  }
+  async function fetchPlace(lat, lng) {
+    const q = new URLSearchParams({ latitude: lat.toFixed(4), longitude: lng.toFixed(4), localityLanguage: "en" });
+    const r = await fetch("https://api.bigdatacloud.net/data/reverse-geocode-client?" + q);
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const j = await r.json();
+    const name = str(j.city) || str(j.locality) || str(j.principalSubdivision) || str(j.countryName);
+    const sub = str(j.principalSubdivision), country = str(j.countryName);
+    return { name, area: sub && sub !== name ? sub : country !== name ? country : "", cc: str(j.countryCode, 2).toUpperCase() };
+  }
+  async function searchPlaces(text) {
+    const q = new URLSearchParams({ name: text, count: "6", language: "en", format: "json" });
+    const r = await fetch("https://geocoding-api.open-meteo.com/v1/search?" + q);
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const j = await r.json();
+    return (Array.isArray(j.results) ? j.results : []).map((p) => ({
+      lat: num(p.latitude), lng: num(p.longitude), name: str(p.name), cc: str(p.country_code, 2).toUpperCase(),
+      area: [str(p.admin1), str(p.country)].filter((x, i, a) => x && a.indexOf(x) === i && x !== str(p.name)).join(", ")
+    })).filter(okLoc);
+  }
+  function locate() {
+    return new Promise((res, rej) => {
+      if (!("geolocation" in navigator)) { rej("unavailable"); return; }
+      navigator.geolocation.getCurrentPosition(
+        (p) => res({ lat: p.coords.latitude, lng: p.coords.longitude }),
+        (e) => rej(e && e.code === 1 ? "denied" : e && e.code === 3 ? "timeout" : "unavailable"),
+        { enableHighAccuracy: false, maximumAge: 15 * 60e3, timeout: 15000 });
+    });
+  }
+  const km = (a, b) => {
+    const r = Math.PI / 180, dLat = (b.lat - a.lat) * r, dLng = (b.lng - a.lng) * r;
+    const x = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * r) * Math.cos(b.lat * r) * Math.sin(dLng / 2) ** 2;
+    return 12742 * Math.asin(Math.min(1, Math.sqrt(x)));
+  };
+
+  /* ---- updating ---- */
+  async function refresh(opts) {
+    const o = opts || {};
+    if (st.busy) { st.again = o; return; }
+    st.busy = true; render();
+    try {
+      if (o.gps || (st.mode === "gps" && st.perm !== "denied")) {
+        let p;
+        try { p = await locate(); }
+        catch (code) {
+          st.err = code === "denied" ? "denied" : "nofix";
+          if (code === "denied") st.perm = "denied";
+          if (!st.loc) return;
+          p = null;
+        }
+        if (p) {
+          st.err = ""; st.perm = "granted";
+          const moved = !st.loc || st.mode !== "gps" || km(st.loc, p) > 3 || !st.loc.name;
+          const prev = st.loc;
+          st.mode = "gps";
+          st.loc = { lat: +p.lat.toFixed(3), lng: +p.lng.toFixed(3), name: prev && !moved ? prev.name : "", area: prev && !moved ? prev.area : "", cc: prev && !moved ? prev.cc : "" };
+          if (moved) { try { Object.assign(st.loc, await fetchPlace(p.lat, p.lng)); } catch (e) {} }
+        }
+      }
+      if (!st.loc) return;
+      try {
+        st.data = await fetchForecast(st.loc); st.at = Date.now();
+        if (st.err === "net") st.err = "";
+      } catch (e) { st.err = st.err || "net"; }
+      save();
+    } finally {
+      st.busy = false; render();
+      if (st.again) { const a = st.again; st.again = null; setTimeout(() => refresh(a), 0); }
+    }
+  }
+  const stale = () => !st.data || Date.now() - st.at > STALE;
+
+  /* ---- drawing ---- */
+  function h(tag, attrs, ...kids) {
+    const e = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs || {})) {
+      if (v === null || v === undefined || v === false) continue;
+      if (k === "text") e.textContent = v;
+      else if (k.startsWith("on")) e.addEventListener(k.slice(2), v);
+      else e.setAttribute(k, v === true ? "" : v);
+    }
+    for (const c of kids.flat()) if (c !== null && c !== undefined && c !== false) e.append(c);
+    return e;
+  }
+  const clock = (t) => { const d = new Date(t + st.data.off * 1000), hr = d.getUTCHours(); return ((hr + 11) % 12 + 1) + (hr < 12 ? " AM" : " PM"); };
+  const dayName = (t) => new Date(t + st.data.off * 1000).toLocaleDateString("en-US", { weekday: "short", timeZone: "UTC" });
+  const ago = (t) => { const m = Math.round((Date.now() - t) / 60e3); return m < 1 ? "just now" : m < 60 ? m + " min ago" : Math.round(m / 60) + " h ago"; };
+  const placeLabel = () => (st.loc && st.loc.name) || (st.mode === "gps" ? "Your location" : "This place");
+
+  function renderPill() {
+    pillI.replaceChildren();
+    if (st.data && st.loc) {
+      const [kind, label] = sky(st.data.now.code, st.data.now.day);
+      pillI.append(icon(kind, label));
+      pillT.replaceChildren(h("b", { text: deg(st.data.now.temp) }), h("span", { text: placeLabel() }));
+      pill.setAttribute("aria-label", "Weather: " + deg(st.data.now.temp) + ", " + label + ", " + placeLabel() + ". Open the forecast");
+    } else {
+      pillI.append(icon("pin"));
+      pillT.replaceChildren(h("span", { class: "wxp-ask", text: st.busy ? "Finding you…" : "Local weather" }));
+      pill.setAttribute("aria-label", "Local weather");
+    }
+    pill.setAttribute("aria-expanded", String(st.open));
+  }
+
+  function noteFor() {
+    if (st.err === "denied") return "Location is off for this app. Turn it on in your phone's settings for this site, or search for a place.";
+    if (st.err === "nofix") return "Couldn't find your location just now. Try again, or search for a place.";
+    if (st.err === "net") return st.data ? "Couldn't reach the weather service. This is the forecast from " + ago(st.at) + "." : "Couldn't reach the weather service. Check your connection and try again.";
+    return "";
+  }
+
+  function renderPanel() {
+    if (!st.open) { panel.hidden = true; return; }
+    const kids = [];
+    const close = h("button", { type: "button", class: "wx-x", "aria-label": "Close weather", onclick: () => setOpen(false) }, "×");
+    if (st.data && st.loc) {
+      const d = st.data, [kind, label] = sky(d.now.code, d.now.day);
+      kids.push(h("div", { class: "wx-head" },
+        h("div", { class: "wx-place" }, h("small", { text: st.mode === "gps" ? "Where you are" : "Chosen place" }), h("b", { text: placeLabel() }), st.loc.area ? h("span", { text: st.loc.area }) : null),
+        close));
+      kids.push(h("div", { class: "wx-now" }, icon(kind, label), h("span", { class: "wx-tmp", text: deg(d.now.temp) }),
+        h("div", { class: "wx-txt" }, h("span", { text: label }),
+          h("span", { class: "mono", text: ["Feels " + deg(d.now.feels), d.now.wind !== null ? "Wind " + speed(d.now.wind) : ""].filter(Boolean).join(" · ") }))));
+      /* next 24 hours, from this hour */
+      const from = Date.now() - 3600e3;
+      const hrs = d.hours.filter((x) => x.t > from).slice(0, 24);
+      const list = h("ol", { class: "wx-hours", "aria-label": "Next 24 hours" });
+      hrs.forEach((x, i) => {
+        const [k2, l2] = i === 0 ? sky(d.now.code, d.now.day) : sky(x.code, x.day);
+        const local = new Date(x.t + d.off * 1000), midnight = i > 0 && local.getUTCHours() === 0;
+        list.append(h("li", { class: "wx-h" + (i === 0 ? " now" : "") + (midnight ? " d0" : "") },
+          h("span", { class: "wx-t", text: i === 0 ? "Now" : midnight ? dayName(x.t) : clock(x.t) }), icon(k2, l2), h("b", { text: deg(i === 0 ? d.now.temp : x.temp) }),
+          h("span", { class: "wx-p", text: x.pop !== null && x.pop >= 20 ? Math.round(x.pop) + "%" : "" })));
+      });
+      kids.push(list);
+      /* the next few days, with a low-to-high bar on one shared scale */
+      if (d.days.length) {
+        const lo = Math.min(...d.days.map((x) => x.lo)), hi = Math.max(...d.days.map((x) => x.hi)), span = Math.max(1, hi - lo);
+        const today = new Date(Date.now() + d.off * 1000).toISOString().slice(0, 10);
+        const rows = h("ul", { class: "wx-days", "aria-label": "Next days" });
+        d.days.slice(0, 5).forEach((x) => {
+          const [k3, l3] = sky(x.code, true);
+          const name = x.date === today ? "Today" : new Date(x.date + "T12:00:00Z").toLocaleDateString("en-US", { weekday: "short", timeZone: "UTC" });
+          rows.append(h("li", null,
+            h("span", { class: "wx-dn", text: name }), icon(k3, l3),
+            h("span", { class: "wx-dp", text: x.pop !== null && x.pop >= 20 ? Math.round(x.pop) + "%" : "" }),
+            h("span", { class: "wx-lo", text: deg(x.lo) }),
+            h("span", { class: "wx-bar", "aria-hidden": "true" }, h("i", { style: "left:" + ((x.lo - lo) / span * 100).toFixed(1) + "%;right:" + ((hi - x.hi) / span * 100).toFixed(1) + "%" })),
+            h("span", { class: "wx-hi", text: deg(x.hi) })));
+        });
+        kids.push(rows);
+      }
+    } else {
+      kids.push(h("div", { class: "wx-head" }, h("div", { class: "wx-place" }, h("small", { text: "Weather" }), h("b", { text: "Forecast for where you are" })), close));
+      kids.push(h("p", { class: "wx-intro", text: "Your phone asks before sharing its location. The location stays on your phone and is only used to look up the forecast and the town name." }));
+    }
+    const note = noteFor();
+    if (note) kids.push(h("p", { class: "wx-note", role: "status", text: note }));
+
+    const acts = h("div", { class: "wx-acts" });
+    if (st.mode !== "gps" || st.err) acts.append(h("button", { type: "button", class: "wx-btn main", disabled: st.busy || null, onclick: () => refresh({ gps: true }) },
+      icon("pin"), st.busy ? "Finding you…" : st.mode === "gps" ? "Try again" : "Use my location"));
+    else acts.append(h("button", { type: "button", class: "wx-btn", disabled: st.busy || null, onclick: () => refresh({ gps: true }) }, st.busy ? "Updating…" : "Update"));
+    acts.append(h("button", { type: "button", class: "wx-btn", "aria-expanded": String(st.search), onclick: () => { st.search = !st.search; st.results = null; render(); if (st.search) setTimeout(() => { const i = $("wxQ"); if (i) i.focus(); }, 0); } }, "Search a place"));
+    const seg = h("div", { class: "wx-unit", role: "group", "aria-label": "Temperature unit" });
+    ["F", "C"].forEach((u) => seg.append(h("button", { type: "button", "aria-pressed": String(unit() === u), onclick: () => { st.unit = u; save(); render(); } }, "°" + u)));
+    acts.append(seg);
+    kids.push(acts);
+
+    if (st.search) {
+      const form = h("form", { class: "wx-search", role: "search", onsubmit: async (ev) => {
+        ev.preventDefault();
+        const text = String(($("wxQ") || {}).value || "").trim();
+        if (text.length < 2) return;
+        st.results = "busy"; render();
+        try { st.results = await searchPlaces(text); } catch (e) { st.results = "error"; }
+        render();
+      } },
+        h("input", { id: "wxQ", type: "search", placeholder: "Town or city", "aria-label": "Search for a town or city", autocomplete: "off", enterkeyhint: "search" }),
+        h("button", { type: "submit", class: "wx-btn" }, "Find"));
+      kids.push(form);
+      if (st.results === "busy") kids.push(h("p", { class: "wx-note", text: "Searching…" }));
+      else if (st.results === "error") kids.push(h("p", { class: "wx-note", text: "Couldn't search right now. Check your connection." }));
+      else if (Array.isArray(st.results)) {
+        if (!st.results.length) kids.push(h("p", { class: "wx-note", text: "No places by that name." }));
+        else kids.push(h("ul", { class: "wx-res" }, st.results.map((p) => h("li", null, h("button", { type: "button", onclick: () => {
+          st.mode = "place"; st.loc = { lat: p.lat, lng: p.lng, name: p.name, area: p.area, cc: p.cc }; st.err = ""; st.search = false; st.results = null; st.data = null;
+          refresh();
+        } }, h("b", { text: p.name }), p.area ? h("span", { text: p.area }) : null)))));
+      }
+    }
+
+    const src = h("div", { class: "wx-src" });
+    if (st.data) src.append(h("span", { class: "dot" + (Date.now() - st.at < 3 * 3600e3 ? " ok" : "") }), "Updated " + ago(st.at) + " · ");
+    src.append(h("a", { href: "https://open-meteo.com/", target: "_blank", rel: "noopener", text: "Weather data by Open-Meteo.com" }));
+    kids.push(src);
+    const keepQ = $("wxQ") ? $("wxQ").value : "";
+    panel.replaceChildren(...kids);
+    if (keepQ && $("wxQ")) $("wxQ").value = keepQ;
+    panel.hidden = false;
+  }
+  function render() { renderPill(); renderPanel(); }
+
+  function setOpen(v) {
+    st.open = v;
+    if (!v) { st.search = false; st.results = null; }
+    render();
+    if (v) { const kp = $("keypop"), kb = $("keyBtn"); if (kp && !kp.hidden){ kp.hidden = true; if (kb) kb.setAttribute("aria-expanded", "false"); } if (stale()) refresh(); }
+    else pill.focus({ preventScroll: true });
+  }
+  pill.addEventListener("click", () => setOpen(!st.open));
+  document.addEventListener("keydown", (ev) => { if (ev.key === "Escape" && st.open) setOpen(false); });
+  const gw = $("globeWrap");
+  if (gw) gw.addEventListener("pointerdown", () => { if (st.open) setOpen(false); });
+
+  /* ---- start: show the saved forecast at once, then refresh quietly ---- */
+  render();
+  (async () => {
+    try {
+      if (navigator.permissions && navigator.permissions.query) {
+        const p = await navigator.permissions.query({ name: "geolocation" });
+        st.perm = p.state;
+        p.addEventListener("change", () => { st.perm = p.state; if (p.state === "granted" && st.mode !== "place") refresh({ gps: true }); });
+      }
+    } catch (e) {}
+    if (st.mode === "none" && st.perm === "granted") refresh({ gps: true });
+    else if (st.mode === "gps" && st.perm !== "denied") refresh();
+    else if (st.mode === "gps") { st.err = "denied"; render(); if (stale()) refresh(); }
+    else if (st.mode === "place" && stale()) refresh();
+  })();
+  setInterval(() => { if (!document.hidden && st.mode !== "none") refresh(); }, EVERY);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && st.mode !== "none" && stale()) refresh(); else if (!document.hidden) render(); });
+  window.addEventListener("online", () => { if (st.mode !== "none" && stale()) refresh(); });
+  const kb = $("keyBtn");
+  if (kb) kb.addEventListener("click", () => { if (st.open){ st.open = false; st.search = false; st.results = null; render(); } });
 })();
 </script>
 </body>

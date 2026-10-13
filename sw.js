@@ -1,7 +1,7 @@
 /* Dateline Atlas service worker: keeps the app usable offline and the news feed fresh.
    App files: served from cache, refreshed in the background (new versions show on next launch).
    News feed: network first, falling back to the last saved sweep when offline. */
-const SHELL_CACHE = "atlas-shell-v1";
+const SHELL_CACHE = "atlas-shell-v2";
 const DATA_CACHE = "atlas-data";
 const FONT_CACHE = "atlas-fonts";
 const SHELL = [
