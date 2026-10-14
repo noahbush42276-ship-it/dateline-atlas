@@ -19,11 +19,11 @@ jobs:
       run:
         working-directory: app
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: latest-stable
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
       - name: Install Capacitor and the plugins
@@ -36,6 +36,11 @@ jobs:
         run: npx --yes @capacitor/assets@3 generate --ios --iconBackgroundColor '#0c1117' --iconBackgroundColorDark '#0c1117' --splashBackgroundColor '#f6f7f8' --splashBackgroundColorDark '#0c1117'
       - name: Permissions text, AdMob ID
         run: node scripts/configure-native.mjs ios && npx cap sync ios
+      - name: What went into the build
+        run: |
+          echo "::notice::Plugins: $(npm ls --depth=0 2>/dev/null | grep -oE '@(capacitor|capgo|capacitor-community)/[a-z-]+@[0-9.]+' | tr '\n' ' ')"
+          echo "::notice::Xcode: $(xcodebuild -version | tr '\n' ' ')"
+          echo "::notice::Web bundle: native.bundle.js $(wc -c < www/native.bundle.js) bytes; Info.plist keys: $(grep -oE 'NSLocationWhenInUseUsageDescription|NSUserTrackingUsageDescription|GADApplicationIdentifier|SKAdNetworkItems' ios/App/App/Info.plist | tr '\n' ' ')"
       - name: Build, sign and upload
         env:
           KEY_ID: ${{ secrets.APPSTORE_API_KEY_ID }}

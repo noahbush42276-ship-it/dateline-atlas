@@ -19,11 +19,11 @@ jobs:
       run:
         working-directory: app
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 21
@@ -58,7 +58,13 @@ jobs:
         run: |
           chmod +x gradlew
           if [ -n "$ANDROID_KEYSTORE_PATH" ]; then ./gradlew --no-daemon bundleRelease; else ./gradlew --no-daemon assembleDebug; fi
-      - uses: actions/upload-artifact@v4
+      - name: What went into the build
+        run: |
+          echo "::notice::Plugins: $(npm ls --depth=0 2>/dev/null | grep -oE '@(capacitor|capgo|capacitor-community)/[a-z-]+@[0-9.]+' | tr '\n' ' ')"
+          echo "::notice::Android SDK: $(grep -E 'minSdkVersion|targetSdkVersion|compileSdkVersion' android/variables.gradle | tr -s ' ' | tr '\n' ' ')"
+          echo "::notice::Web bundle: index.html $(wc -c < www/index.html) bytes, native.bundle.js $(wc -c < www/native.bundle.js) bytes, plugins on window.AtlasNative: $(grep -c AtlasNative www/native.bundle.js)"
+          echo "::notice::Outputs: $(cd android/app/build/outputs && find . -name '*.aab' -o -name '*.apk' | xargs -r ls -l | awk '{print $5, $9}' | tr '\n' ' ')"
+      - uses: actions/upload-artifact@v5
         with:
           name: dateline-atlas-android-${{ github.run_number }}
           path: |
