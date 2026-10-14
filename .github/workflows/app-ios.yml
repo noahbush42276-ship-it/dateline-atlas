@@ -1,0 +1,74 @@
+# Builds the iPhone app on a Mac in the cloud and, with the four APPSTORE_* / APPLE_TEAM_ID secrets set,
+# signs it and uploads it to App Store Connect (it then shows up in TestFlight). Without them it only checks
+# that the app compiles. Run it from the Actions tab ("Run workflow").
+name: Phone app - iPhone
+on:
+  workflow_dispatch:
+  push:
+    tags: ["app-v*"]
+permissions:
+  contents: read
+concurrency:
+  group: app-ios
+  cancel-in-progress: false
+jobs:
+  ios:
+    runs-on: macos-26
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Capacitor and the plugins
+        run: npm install --no-audit --no-fund
+      - name: Web bundle
+        run: npm run prepare-www && node scripts/configure-native.mjs www
+      - name: iOS project
+        run: npx cap add ios
+      - name: Icons and splash screens
+        run: npx --yes @capacitor/assets@3 generate --ios --iconBackgroundColor '#0c1117' --iconBackgroundColorDark '#0c1117' --splashBackgroundColor '#f6f7f8' --splashBackgroundColorDark '#0c1117'
+      - name: Permissions text, AdMob ID
+        run: node scripts/configure-native.mjs ios && npx cap sync ios
+      - name: Build, sign and upload
+        env:
+          KEY_ID: ${{ secrets.APPSTORE_API_KEY_ID }}
+          ISSUER_ID: ${{ secrets.APPSTORE_API_ISSUER_ID }}
+          KEY_P8: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
+          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          BUILD_NUMBER: ${{ github.run_number }}
+        run: |
+          VERSION=$(node -p "require('./store-config.json').version")
+          cd ios/App
+          if [ -z "$KEY_ID" ] || [ -z "$ISSUER_ID" ] || [ -z "$KEY_P8" ] || [ -z "$TEAM_ID" ]; then
+            echo "::notice::App Store secrets aren't set yet, so this run only checks that the app compiles (simulator build)."
+            xcodebuild -project App.xcodeproj -scheme App -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+              CODE_SIGNING_ALLOWED=NO MARKETING_VERSION="$VERSION" CURRENT_PROJECT_VERSION="$BUILD_NUMBER" build
+            exit 0
+          fi
+          KEY_PATH="$RUNNER_TEMP/AuthKey_$KEY_ID.p8"
+          printf '%s\n' "$KEY_P8" > "$KEY_PATH"
+          AUTH=(-allowProvisioningUpdates -authenticationKeyPath "$KEY_PATH" -authenticationKeyID "$KEY_ID" -authenticationKeyIssuerID "$ISSUER_ID")
+          xcodebuild -project App.xcodeproj -scheme App -configuration Release -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/App.xcarchive" "${AUTH[@]}" \
+            DEVELOPMENT_TEAM="$TEAM_ID" CODE_SIGN_STYLE=Automatic MARKETING_VERSION="$VERSION" CURRENT_PROJECT_VERSION="$BUILD_NUMBER" archive
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>upload</string>
+            <key>teamID</key><string>$TEAM_ID</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>manageAppVersionAndBuildNumber</key><false/>
+          </dict></plist>
+          PLIST
+          xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/App.xcarchive" -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -exportPath "$RUNNER_TEMP/export" "${AUTH[@]}"
+          rm -f "$KEY_PATH"

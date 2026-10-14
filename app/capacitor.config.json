@@ -1,0 +1,18 @@
+{
+  "appId": "io.github.noahbush42276.datelineatlas",
+  "appName": "Dateline Atlas",
+  "webDir": "www",
+  "backgroundColor": "#0c1117",
+  "android": {
+    "allowMixedContent": false
+  },
+  "ios": {
+    "contentInset": "never",
+    "scrollEnabled": false
+  },
+  "plugins": {
+    "SystemBars": {
+      "insetsHandling": "css"
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "name": "dateline-atlas-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Dateline Atlas for Android and iPhone: the web app in a Capacitor shell, with a banner ad and the Upgrade in-app purchase.",
+  "scripts": {
+    "bundle": "esbuild native-entry.js --bundle --minify --format=iife --target=es2020 --outfile=www/native.bundle.js",
+    "assets": "node scripts/copy-assets.mjs",
+    "prepare-www": "npm run assets && npm run bundle"
+  },
+  "dependencies": {
+    "@capacitor-community/admob": "^8.2.1",
+    "@capacitor/android": "^8.0.0",
+    "@capacitor/core": "^8.0.0",
+    "@capacitor/geolocation": "^8.2.3",
+    "@capacitor/ios": "^8.0.0",
+    "@capgo/native-purchases": "^8.9.5"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.0.0",
+    "esbuild": "^0.25.0"
+  }
+}

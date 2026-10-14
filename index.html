@@ -146,7 +146,7 @@ a{color:var(--accent)}
 /* ---------- panel views ---------- */
 .v-panel{display:flex;flex-direction:column;background:var(--surface)}
 .pscroll{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
-.sfilters{display:grid;gap:10px;padding:12px 0 10px;border-bottom:1px solid var(--rule)}
+.sfilters{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;padding:12px 0 10px;border-bottom:1px solid var(--rule)}
 .sfilters>*:not(.chips){margin-inline:16px}
 .search{width:auto;border:1px solid var(--rule);background:var(--bg);border-radius:10px;padding:9px 12px;font-size:16px}
 .search::placeholder{color:var(--ink-3)}
@@ -1470,6 +1470,12 @@ if ("serviceWorker" in navigator) window.addEventListener("load", () => { naviga
   const pill = $("wxPill"), pillI = $("wxPillI"), pillT = $("wxPillT"), panel = $("wxPanel");
   if (!pill || !panel) return;
   const KEY = "atlasm-wx", STALE = 20 * 60e3, EVERY = 30 * 60e3;
+  /* Where the forecast comes from: Open-Meteo (free web app, worldwide, non-commercial use) or the US National
+     Weather Service (the store apps: free for any use, United States only). */
+  const NWS = window.WX_PROVIDER === "nws";
+  /* In the phone apps, location comes from the Capacitor Geolocation plugin (native.bundle.js puts it on window.AtlasNative). */
+  const CAP = window.Capacitor, NATIVE = !!(CAP && CAP.isNativePlatform && CAP.isNativePlatform());
+  const GEO = NATIVE ? ((window.AtlasNative && window.AtlasNative.Geolocation) || (CAP.Plugins && CAP.Plugins.Geolocation) || null) : null;
   const st = { mode: "none", loc: null, data: null, at: 0, unit: null, busy: false, err: "", perm: "unknown", open: false, search: false, results: null };
 
   /* ---- saved state (per phone) ---- */
@@ -1556,6 +1562,8 @@ if ("serviceWorker" in navigator) window.addEventListener("load", () => { naviga
     return ["cloud", "—"];
   }
 
+  const skyOf = (x, day) => (x && x.kind ? [x.kind, x.label || ""] : sky(x && x.code, day));
+
   /* ---- reading Open-Meteo (always Celsius and km/h; converted for display) ---- */
   function readForecast(j) {
     const off = num(j && j.utc_offset_seconds) || 0;
@@ -1579,7 +1587,60 @@ if ("serviceWorker" in navigator) window.addEventListener("load", () => { naviga
     if (now.temp === null || hours.length < 6) throw new Error("incomplete forecast");
     return { off, now, hours, days };
   }
+  /* ---- reading the National Weather Service (Fahrenheit and mph; converted to the same shape as Open-Meteo's) ---- */
+  function textKind(text, day) {
+    const t = String(text || "").toLowerCase();
+    if (/thunder|t-storm/.test(t)) return "storm";
+    if (/snow|sleet|flurr|freezing|ice/.test(t)) return "snow";
+    if (/rain|shower|drizzle/.test(t)) return "rain";
+    if (/fog|mist|haze|smoke/.test(t)) return "fog";
+    if (/partly|mostly sunny|mostly clear|few clouds|scattered clouds/.test(t)) return day ? "psun" : "pmoon";
+    if (/cloudy|overcast/.test(t)) return "cloud";
+    if (/sunny|clear|fair/.test(t)) return day ? "sun" : "moon";
+    return day ? "psun" : "pmoon";
+  }
+  const fToC = (f) => (num(f) === null ? null : (f - 32) * 5 / 9);
+  const mphToKmh = (txt) => { const m = String(txt || "").match(/\d+(?:\.\d+)?/g); return m ? Math.max(...m.map(Number)) * 1.609 : null; };
+  const offOf = (iso) => { const m = /([+-])(\d\d):(\d\d)$/.exec(String(iso || "")); return m ? (m[1] === "-" ? -1 : 1) * (Number(m[2]) * 3600 + Number(m[3]) * 60) : 0; };
+  async function getJSON(url) {
+    const r = await fetch(url, { headers: { Accept: "application/geo+json" } });
+    if (r.status === 404) { const e = new Error("outside"); e.outside = true; throw e; }
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    return r.json();
+  }
+  async function fetchNWS(loc) {
+    const pt = await getJSON("https://api.weather.gov/points/" + loc.lat.toFixed(4) + "," + loc.lng.toFixed(4));
+    const P = (pt && pt.properties) || {};
+    if (!P.forecastHourly || !P.forecast) { const e = new Error("outside"); e.outside = true; throw e; }
+    const [hj, dj] = await Promise.all([getJSON(P.forecastHourly), getJSON(P.forecast)]);
+    const hp = ((hj && hj.properties) || {}).periods || [], dp = ((dj && dj.properties) || {}).periods || [];
+    const off = offOf(hp[0] && hp[0].startTime);
+    const hours = hp.slice(0, 60).map((x) => ({ t: Date.parse(x.startTime), temp: fToC(x.temperature), day: !!x.isDaytime,
+      pop: num(x.probabilityOfPrecipitation && x.probabilityOfPrecipitation.value), kind: textKind(x.shortForecast, !!x.isDaytime),
+      label: str(x.shortForecast, 60), wind: mphToKmh(x.windSpeed) })).filter((x) => Number.isFinite(x.t) && x.temp !== null);
+    const byDate = new Map();
+    for (const x of dp) {
+      const d = String(x.startTime || "").slice(0, 10); if (!d) continue;
+      const o = byDate.get(d) || { date: d, hi: null, lo: null, pop: null, kind: null, label: "" };
+      const tc = fToC(x.temperature), pp = num(x.probabilityOfPrecipitation && x.probabilityOfPrecipitation.value);
+      if (x.isDaytime) { o.hi = tc; o.kind = textKind(x.shortForecast, true); o.label = str(x.shortForecast, 60); }
+      else if (o.lo === null) o.lo = tc;
+      if (pp !== null) o.pop = Math.max(o.pop || 0, pp);
+      if (!o.kind) { o.kind = textKind(x.shortForecast, true); o.label = str(x.shortForecast, 60); }
+      byDate.set(d, o);
+    }
+    const days = [...byDate.values()].map((o) => {
+      const temps = hours.filter((x) => new Date(x.t + off * 1000).toISOString().slice(0, 10) === o.date).map((x) => x.temp);
+      return { ...o, hi: o.hi !== null ? o.hi : temps.length ? Math.max(...temps) : null, lo: o.lo !== null ? o.lo : temps.length ? Math.min(...temps) : null };
+    }).filter((o) => o.hi !== null && o.lo !== null).slice(0, 6);
+    const h0 = hours[0];
+    if (!h0 || hours.length < 6) throw new Error("incomplete forecast");
+    const rel = ((P.relativeLocation || {}).properties) || {};
+    return { off, now: { t: h0.t, temp: h0.temp, feels: null, kind: h0.kind, label: h0.label, day: h0.day, wind: h0.wind }, hours, days,
+             place: { name: str(rel.city), area: str(rel.state), cc: "US" } };
+  }
   async function fetchForecast(loc) {
+    if (NWS) return fetchNWS(loc);
     const q = new URLSearchParams({
       latitude: loc.lat.toFixed(3), longitude: loc.lng.toFixed(3),
       current: "temperature_2m,apparent_temperature,weather_code,is_day,wind_speed_10m",
@@ -1610,7 +1671,19 @@ if ("serviceWorker" in navigator) window.addEventListener("load", () => { naviga
       area: [str(p.admin1), str(p.country)].filter((x, i, a) => x && a.indexOf(x) === i && x !== str(p.name)).join(", ")
     })).filter(okLoc);
   }
+  async function locateNative() {
+    try {
+      let p = await GEO.checkPermissions();
+      if (p.location !== "granted" && p.coarseLocation !== "granted") p = await GEO.requestPermissions({ permissions: ["coarseLocation"] });
+      if (p.location !== "granted" && p.coarseLocation !== "granted") throw "denied";
+      const pos = await GEO.getCurrentPosition({ enableHighAccuracy: false, timeout: 15000, maximumAge: 15 * 60e3 });
+      return { lat: pos.coords.latitude, lng: pos.coords.longitude };
+    } catch (e) {
+      throw e === "denied" || /denied|permission/i.test(String((e && e.message) || e)) ? "denied" : "unavailable";
+    }
+  }
   function locate() {
+    if (GEO) return locateNative();
     return new Promise((res, rej) => {
       if (!("geolocation" in navigator)) { rej("unavailable"); return; }
       navigator.geolocation.getCurrentPosition(
@@ -1647,14 +1720,18 @@ if ("serviceWorker" in navigator) window.addEventListener("load", () => { naviga
           const prev = st.loc;
           st.mode = "gps";
           st.loc = { lat: +p.lat.toFixed(3), lng: +p.lng.toFixed(3), name: prev && !moved ? prev.name : "", area: prev && !moved ? prev.area : "", cc: prev && !moved ? prev.cc : "" };
-          if (moved) { try { Object.assign(st.loc, await fetchPlace(p.lat, p.lng)); } catch (e) {} }
+          if (moved && !NWS) { try { Object.assign(st.loc, await fetchPlace(p.lat, p.lng)); } catch (e) {} }
         }
       }
       if (!st.loc) return;
       try {
         st.data = await fetchForecast(st.loc); st.at = Date.now();
-        if (st.err === "net") st.err = "";
-      } catch (e) { st.err = st.err || "net"; }
+        if (st.data.place) { if (!st.loc.name) Object.assign(st.loc, st.data.place); delete st.data.place; }
+        if (st.err === "net" || st.err === "outside") st.err = "";
+      } catch (e) {
+        if (e && e.outside) { st.err = "outside"; st.data = null; }
+        else st.err = st.err || "net";
+      }
       save();
     } finally {
       st.busy = false; render();
@@ -1688,7 +1765,7 @@ if ("serviceWorker" in navigator) window.addEventListener("load", () => { naviga
       pillT.replaceChildren();
       pill.setAttribute("aria-label", "Weather is off. Tap to turn it on");
     } else if (st.data && st.loc) {
-      const [kind, label] = sky(st.data.now.code, st.data.now.day);
+      const [kind, label] = skyOf(st.data.now, st.data.now.day);
       pillI.append(icon(kind, label));
       pillT.replaceChildren(h("b", { text: deg(st.data.now.temp) }), h("span", { text: placeLabel() }));
       pill.setAttribute("aria-label", "Weather: " + deg(st.data.now.temp) + ", " + label + ", " + placeLabel() + ". Open the forecast");
@@ -1701,8 +1778,9 @@ if ("serviceWorker" in navigator) window.addEventListener("load", () => { naviga
   }
 
   function noteFor() {
-    if (st.err === "denied") return "Your phone didn't share its location, so weather is off. Everything else works as usual. You can search for a place, or allow location for this app in your phone's settings.";
-    if (st.err === "nofix") return "Couldn't find your location just now. Try again, or search for a place.";
+    if (st.err === "denied") return "Your phone didn't share its location, so weather is off. Everything else works as usual. " + (NWS ? "You can allow location for this app in your phone's settings." : "You can search for a place, or allow location for this app in your phone's settings.");
+    if (st.err === "outside") return "Weather covers the United States only: it comes from the US National Weather Service. Everything else works as usual.";
+    if (st.err === "nofix") return "Couldn't find your location just now. " + (NWS ? "Try again in a moment." : "Try again, or search for a place.");
     if (st.err === "net") return st.data ? "Couldn't reach the weather service. This is the forecast from " + ago(st.at) + "." : "Couldn't reach the weather service. Check your connection and try again.";
     return "";
   }
@@ -1712,19 +1790,19 @@ if ("serviceWorker" in navigator) window.addEventListener("load", () => { naviga
     const kids = [];
     const close = h("button", { type: "button", class: "wx-x", "aria-label": "Close weather", onclick: () => setOpen(false) }, "×");
     if (st.data && st.loc) {
-      const d = st.data, [kind, label] = sky(d.now.code, d.now.day);
+      const d = st.data, [kind, label] = skyOf(d.now, d.now.day);
       kids.push(h("div", { class: "wx-head" },
         h("div", { class: "wx-place" }, h("small", { text: st.mode === "gps" ? "Where you are" : "Chosen place" }), h("b", { text: placeLabel() }), st.loc.area ? h("span", { text: st.loc.area }) : null),
         close));
       kids.push(h("div", { class: "wx-now" }, icon(kind, label), h("span", { class: "wx-tmp", text: deg(d.now.temp) }),
         h("div", { class: "wx-txt" }, h("span", { text: label }),
-          h("span", { class: "mono", text: ["Feels " + deg(d.now.feels), d.now.wind !== null ? "Wind " + speed(d.now.wind) : ""].filter(Boolean).join(" · ") }))));
+          h("span", { class: "mono", text: [d.now.feels !== null && d.now.feels !== undefined ? "Feels " + deg(d.now.feels) : "", d.now.wind !== null && d.now.wind !== undefined ? "Wind " + speed(d.now.wind) : ""].filter(Boolean).join(" · ") }))));
       /* next 24 hours, from this hour */
       const from = Date.now() - 3600e3;
       const hrs = d.hours.filter((x) => x.t > from).slice(0, 24);
       const list = h("ol", { class: "wx-hours", "aria-label": "Next 24 hours" });
       hrs.forEach((x, i) => {
-        const [k2, l2] = i === 0 ? sky(d.now.code, d.now.day) : sky(x.code, x.day);
+        const [k2, l2] = i === 0 ? skyOf(d.now, d.now.day) : skyOf(x, x.day);
         const local = new Date(x.t + d.off * 1000), midnight = i > 0 && local.getUTCHours() === 0;
         list.append(h("li", { class: "wx-h" + (i === 0 ? " now" : "") + (midnight ? " d0" : "") },
           h("span", { class: "wx-t", text: i === 0 ? "Now" : midnight ? dayName(x.t) : clock(x.t) }), icon(k2, l2), h("b", { text: deg(i === 0 ? d.now.temp : x.temp) }),
@@ -1737,7 +1815,7 @@ if ("serviceWorker" in navigator) window.addEventListener("load", () => { naviga
         const today = new Date(Date.now() + d.off * 1000).toISOString().slice(0, 10);
         const rows = h("ul", { class: "wx-days", "aria-label": "Next days" });
         d.days.slice(0, 5).forEach((x) => {
-          const [k3, l3] = sky(x.code, true);
+          const [k3, l3] = skyOf(x, true);
           const name = x.date === today ? "Today" : new Date(x.date + "T12:00:00Z").toLocaleDateString("en-US", { weekday: "short", timeZone: "UTC" });
           rows.append(h("li", null,
             h("span", { class: "wx-dn", text: name }), icon(k3, l3),
@@ -1750,10 +1828,10 @@ if ("serviceWorker" in navigator) window.addEventListener("load", () => { naviga
       }
     } else if (st.mode === "off") {
       kids.push(h("div", { class: "wx-head" }, h("div", { class: "wx-place" }, h("small", { text: "Weather" }), h("b", { text: "Weather is off" })), close));
-      if (st.err !== "denied") kids.push(h("p", { class: "wx-intro", text: "The app works the same without it. Turn it on to see the forecast where you are, or pick a place." }));
+      if (st.err !== "denied") kids.push(h("p", { class: "wx-intro", text: NWS ? "The app works the same without it. Turn it on to see the forecast where you are (in the United States)." : "The app works the same without it. Turn it on to see the forecast where you are, or pick a place." }));
     } else {
       kids.push(h("div", { class: "wx-head" }, h("div", { class: "wx-place" }, h("small", { text: "Weather" }), h("b", { text: "Forecast for where you are" })), close));
-      kids.push(h("p", { class: "wx-intro", text: "Your phone asks before sharing its location, and you can say no: the app works the same without weather. The location stays on your phone and is only used to look up the forecast and the town name." }));
+      kids.push(h("p", { class: "wx-intro", text: "Your phone asks before sharing its location, and you can say no: the app works the same without weather. The location stays on your phone and is only used to look up the forecast" + (NWS ? " from the US National Weather Service (United States only)." : " and the town name.") }));
     }
     const note = noteFor();
     if (note) kids.push(h("p", { class: "wx-note", role: "status", text: note }));
@@ -1762,7 +1840,7 @@ if ("serviceWorker" in navigator) window.addEventListener("load", () => { naviga
     if (st.mode !== "gps" || st.err) acts.append(h("button", { type: "button", class: "wx-btn main", disabled: st.busy || null, onclick: () => refresh({ gps: true }) },
       icon("pin"), st.busy ? "Finding you…" : st.mode === "gps" ? "Try again" : "Use my location"));
     else acts.append(h("button", { type: "button", class: "wx-btn", disabled: st.busy || null, onclick: () => refresh({ gps: true }) }, st.busy ? "Updating…" : "Update"));
-    acts.append(h("button", { type: "button", class: "wx-btn", "aria-expanded": String(st.search), onclick: () => { st.search = !st.search; st.results = null; render(); if (st.search) setTimeout(() => { const i = $("wxQ"); if (i) i.focus(); }, 0); } }, "Search a place"));
+    if (!NWS) acts.append(h("button", { type: "button", class: "wx-btn", "aria-expanded": String(st.search), onclick: () => { st.search = !st.search; st.results = null; render(); if (st.search) setTimeout(() => { const i = $("wxQ"); if (i) i.focus(); }, 0); } }, "Search a place"));
     if (st.data) {
       const seg = h("div", { class: "wx-unit", role: "group", "aria-label": "Temperature unit" });
       ["F", "C"].forEach((u) => seg.append(h("button", { type: "button", "aria-pressed": String(unit() === u), onclick: () => { st.unit = u; save(); render(); } }, "°" + u)));
@@ -1797,7 +1875,8 @@ if ("serviceWorker" in navigator) window.addEventListener("load", () => { naviga
 
     const src = h("div", { class: "wx-src" });
     if (st.data) src.append(h("span", { class: "dot" + (Date.now() - st.at < 3 * 3600e3 ? " ok" : "") }), "Updated " + ago(st.at) + " · ");
-    src.append(h("a", { href: "https://open-meteo.com/", target: "_blank", rel: "noopener", text: "Weather data by Open-Meteo.com" }));
+    src.append(NWS ? h("a", { href: "https://www.weather.gov/", target: "_blank", rel: "noopener", text: "Weather: US National Weather Service" })
+                   : h("a", { href: "https://open-meteo.com/", target: "_blank", rel: "noopener", text: "Weather data by Open-Meteo.com" }));
     if (active()) src.append(h("button", { type: "button", class: "wx-off", onclick: () => turnOff() }, "Turn off weather"));
     kids.push(src);
     const keepQ = $("wxQ") ? $("wxQ").value : "";
@@ -1823,7 +1902,10 @@ if ("serviceWorker" in navigator) window.addEventListener("load", () => { naviga
   render();
   (async () => {
     try {
-      if (navigator.permissions && navigator.permissions.query) {
+      if (GEO) {
+        const p = await GEO.checkPermissions();
+        st.perm = p.location === "granted" || p.coarseLocation === "granted" ? "granted" : p.location === "denied" ? "denied" : "prompt";
+      } else if (navigator.permissions && navigator.permissions.query) {
         const p = await navigator.permissions.query({ name: "geolocation" });
         st.perm = p.state;
         p.addEventListener("change", () => {

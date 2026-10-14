@@ -1,0 +1,25 @@
+{
+  "appId": "io.github.noahbush42276.datelineatlas",
+  "appName": "Dateline Atlas",
+  "version": "1.0.0",
+  "productId": "atlas_upgrade",
+  "freeStories": 80,
+  "prices": {
+    "android": "$1.99",
+    "ios": "$2.99"
+  },
+  "adsTesting": true,
+  "admob": {
+    "android": {
+      "appId": "ca-app-pub-3940256099942544~3347511713",
+      "banner": "ca-app-pub-3940256099942544/9214589741"
+    },
+    "ios": {
+      "appId": "ca-app-pub-3940256099942544~1458002511",
+      "banner": "ca-app-pub-3940256099942544/2435281174"
+    }
+  },
+  "privacyUrl": "https://noahbush42276-ship-it.github.io/dateline-atlas/privacy.html",
+  "supportUrl": "https://noahbush42276-ship-it.github.io/dateline-atlas/support.html",
+  "_comment": "adsTesting true and Google's sample AdMob IDs until your own AdMob app and banner unit exist; then put yours here and set adsTesting to false."
+}
