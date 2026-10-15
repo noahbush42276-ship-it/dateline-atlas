@@ -3,10 +3,11 @@
 The store apps are the Dateline Atlas web app inside a [Capacitor](https://capacitorjs.com/) shell, built in the
 cloud by GitHub Actions, so no Mac or Android Studio is needed.
 
-- **Free:** the top 80 stories, headline search, one banner ad at the bottom (Google AdMob; it refreshes on its own).
-- **Upgrade:** one in-app purchase, product ID `atlas_upgrade` (non-consumable): every story (300+), deep search
-  with filters by country and reliability, no ad. $1.99 on Google Play, $2.99 on the App Store (prices are set in
-  each store's console; the app shows whatever the store says).
+- **Free:** the top 200 stories, headline search, one banner ad at the bottom (Google AdMob; it refreshes on its own).
+- **Premium:** an auto-renewing subscription, $4.00 a month or $36.00 a year on both stores: every story, deep
+  search with filters by country and reliability, no ad. Google Play: subscription `atlas_premium` with base plans
+  `monthly` and `yearly`. App Store: `atlas_premium_monthly` and `atlas_premium_yearly` in one group. Prices are
+  set in each store's console; the app shows whatever the store says.
 - **News:** `data/store-feed.json` on this site, built only from the GDELT Project's open index (free for
   commercial use with credit). The free web app keeps using `data/feed.json`.
 - **Weather:** optional, US only, from the National Weather Service (free for any use). Location is approximate
@@ -18,7 +19,7 @@ cloud by GitHub Actions, so no Mac or Android Studio is needed.
 | --- | --- |
 | `www/index.html` | The app's page: built by `store/build_store.py` from the shared Atlas template (don't edit by hand) |
 | `www/store-config.js` | Written from `store-config.json` at build time |
-| `store-config.json` | App ID, version, Upgrade product ID, free-tier size, AdMob IDs, policy links |
+| `store-config.json` | App ID, version, Premium product IDs, free-tier size, AdMob IDs, policy links |
 | `native-entry.js` | Bundled into `www/native.bundle.js`: the AdMob, Geolocation and purchases plugins |
 | `scripts/configure-native.mjs` | Fills in the generated Android and iOS projects: permissions, AdMob app ID, version, signing |
 | `scripts/copy-assets.mjs` | Copies the d3 library and relief images from the site into `www/` |

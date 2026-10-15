@@ -1,12 +1,12 @@
 # Putting Dateline Atlas on Google Play and the App Store
 
-Everything in the code is ready: the free version with one banner ad, the Upgrade purchase, the news feed, the
+Everything in the code is ready: the free version with one banner ad, the Premium subscription, the news feed, the
 weather, and cloud builds for both phones. What's left is account work that only the account owner can do:
 signing up, paying the store fees, accepting agreements, entering bank and tax details, and creating keys.
 This guide goes through it in order. Plan on a few hours of clicking spread over about three weeks, because
 Google requires a 14-day test before a new personal developer account can publish.
 
-Prices: the Upgrade is **$1.99 on Google Play** and **$2.99 on the App Store**. The app itself is free on both.
+Prices: **Premium is $4.00 a month or $36.00 a year** on both stores, as an auto-renewing subscription. The app itself is free, with the top 200 stories and one banner ad.
 
 ---
 
@@ -20,9 +20,9 @@ Prices: the Upgrade is **$1.99 on Google Play** and **$2.99 on the App Store**. 
 3. **AdMob**: <https://admob.google.com/>, signed in with the same Google account. Free.
 4. **Getting paid**
    - Google: Play Console → Settings → **Payments profile**, which makes a Google payments merchant account.
-     It's needed before you can sell the Upgrade.
+     It's needed before you can sell Premium.
    - Apple: App Store Connect → **Business** → accept the **Paid Apps** agreement, then add bank and tax details.
-     The Upgrade can't be sold until this shows as active.
+     Premium can't be sold until this shows as active.
    - AdMob: Payments → add bank details. AdMob pays monthly once earnings pass $100.
 
 ## 2. The keys the cloud builds need (day 1)
@@ -72,18 +72,28 @@ Add four secrets:
    they are (In-App Purchase is on by default).
 2. App Store Connect → **Apps → + → New App**: iOS, name "Dateline Atlas" (or "Dateline Atlas: World News" if
    the name is taken), language English (U.S.), that bundle ID, SKU `dateline-atlas`.
-3. **Monetization → In-App Purchases → +** → **Non-Consumable**. Reference name "Upgrade", product ID
-   **`atlas_upgrade`** (exactly this). Price **$2.99**. Add an English display name ("Upgrade") and description
-   ("Every story, deep search and filters, and no ads."). Apple asks for a review screenshot: use
-   `review-upgrade-sheet.png` from the store kit.
+3. **Monetization → Subscriptions → +** to create a subscription group named "Premium". In it, create two
+   subscriptions (IDs exactly as written):
+   - `atlas_premium_monthly`: reference name "Premium monthly", duration **1 month**, price **$4.00**.
+   - `atlas_premium_yearly`: reference name "Premium yearly", duration **1 year**, price **$36.00**.
+
+   For each, add an English display name ("Premium", "Premium (yearly)") and a description ("Every story, deep
+   search and filters, and no ads"). Apple asks for a review screenshot: use `review-premium-sheet.png` from the
+   store kit. Also fill in the group's English localization.
+4. On the app's **App Information** page, the default Terms of Use is Apple's standard license, which the app
+   already links to. Add the privacy policy URL.
 
 ### Google
 
 1. Play Console → **Create app**: name "Dateline Atlas", English (United States), **App**, **Free**. Accept
    the declarations.
-2. **Monetize → Products → One-time products → Create**: product ID **`atlas_upgrade`**, name "Upgrade",
-   description as above, price **$1.99** (let Google set the other countries' prices), then **Activate**. Play
-   only shows this page after the first build has been uploaded (step 5), so come back to it then.
+2. **Monetize → Products → Subscriptions → Create subscription**: product ID **`atlas_premium`**, name
+   "Premium". Add two **base plans** (IDs exactly as written), both auto-renewing:
+   - `monthly`: billing period 1 month, price **$4.00**.
+   - `yearly`: billing period 1 year, price **$36.00**.
+
+   Let Google set the other countries' prices, then **Activate** both base plans. Play only shows this page after
+   the first build has been uploaded (step 5), so come back to it then.
 
 ### AdMob
 
@@ -118,7 +128,7 @@ can apply for production.
 
 1. Play Console → **Test and release → Testing → Internal testing** → create a release → upload the `.aab`.
    Add yourself as a tester, install from the opt-in link, and check that the app runs. Then create the
-   `atlas_upgrade` product (section 3) and add yourself under **Settings → License testing** so your test
+   `atlas_premium` subscription (section 3) and add yourself under **Settings → License testing** so your test
    purchases are free.
 2. **Closed testing** → create a track → upload the same `.aab` → add at least 12 testers (a Google Group or a
    list of their Google account emails) → send them the opt-in link. They need to stay opted in for 14 days.
@@ -128,7 +138,7 @@ can apply for production.
 
 ## 6. Store listings
 
-Screenshots, the feature graphic and the Upgrade review screenshot are in the store kit (Claude sent it with
+Screenshots, the feature graphic and the Premium review screenshot are in the store kit (Claude sent it with
 this guide).
 
 | | Google Play | App Store |
@@ -158,9 +168,11 @@ this guide).
 > • Optional local weather for the United States, from the National Weather Service
 > • Works offline with the last stories it downloaded
 >
-> The app is free with one small banner ad and shows the top 80 stories. The Upgrade, a one-time purchase,
-> unlocks every story (300 and more), deep search inside summaries, claims and outlets, filters by country and
-> reliability, and removes the ad.
+> The app is free with one small banner ad and shows the top 200 stories. Premium shows every story and adds
+> deep search inside summaries, claims and outlets, filters by country and reliability, and no ads. Premium is
+> an auto-renewing subscription: $4.00 a month or $36.00 a year. Cancel any time in your account settings.
+>
+> Terms of use: https://noahbush42276-ship-it.github.io/dateline-atlas/terms.html
 >
 > Stories are found through the GDELT Project's open index of world news. Reliability and framing scores are
 > made by an AI model; they are judgments, not verdicts, and every story links to its sources.
@@ -172,7 +184,7 @@ lawyer, and the stores' wording changes.
 
 **Google Play → App content**
 - Privacy policy: the link above. Ads: **Yes, contains ads**. App access: **all functionality is available
-  without special access** (the Upgrade is an ordinary purchase).
+  without special access** (Premium is an ordinary subscription).
 - Target audience: **13 and over** (or 18+). Not designed for children.
 - News app: **Yes**. Google's news policy asks for the publisher's contact details; put your contact email on
   the support page and in the listing.
@@ -202,15 +214,16 @@ lawyer, and the stores' wording changes.
 ## 8. Submitting
 
 - **Apple**: App Store Connect → the app → the version page → add screenshots, description, keywords, support
-  and privacy URLs → **Build**: pick the TestFlight build → **In-App Purchases**: add `atlas_upgrade` → review
+  and privacy URLs → **Build**: pick the TestFlight build → **In-App Purchases and Subscriptions**: add both Premium subscriptions → review
   notes (below) → **Add for Review**. Review usually takes 1–3 days.
 - **Google**: after production is approved, **Production → Create release** with the latest `.aab` → roll out.
 
 Review notes for both stores:
 
-> The app is free with one AdMob banner ad. The non-consumable in-app purchase "Upgrade" (atlas_upgrade)
-> unlocks the full story list (the free version shows the top 80), deep search and filters, and removes the ad.
-> Tap the star button at the top or the Sources tab → Upgrade; "Restore purchases" is in both places. Weather is
+> The app is free with one AdMob banner ad. The auto-renewing subscription "Premium" (monthly or yearly)
+> shows the full story list (the free version shows the top 200), adds deep search and filters, and removes the
+> ad. Tap the Premium button at the top or Sources → Go Premium; "Restore purchases" is in both places, and
+> subscribers get "Manage subscription" on the Sources tab. Weather is
 > optional: tap the weather button on the globe and allow approximate location; it covers the United States
 > only (National Weather Service). No sign-in is needed.
 

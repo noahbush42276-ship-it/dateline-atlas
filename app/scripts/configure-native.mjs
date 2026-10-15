@@ -23,10 +23,10 @@ function once(text, needle, insert, where = "before") {
 const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
 const LOCATION_WHY = "Dateline Atlas shows the weather where you are. Your location stays on your phone and is only sent to the US National Weather Service to look up the forecast. You can say no: everything else works the same.";
-const TRACKING_WHY = "The free version shows one banner ad. Allowing tracking lets that ad be more relevant to you. The Upgrade removes the ad.";
+const TRACKING_WHY = "The free version shows one banner ad. Allowing tracking lets that ad be more relevant to you. Premium removes the ad.";
 
 if (target === "www") {
-  const page = Object.fromEntries(["productId", "freeStories", "prices", "adsTesting", "admob", "privacyUrl", "supportUrl"].map((k) => [k, cfg[k]]));
+  const page = Object.fromEntries(["premium", "freeStories", "prices", "adsTesting", "admob", "privacyUrl", "supportUrl", "termsUrl", "appleTermsUrl"].map((k) => [k, cfg[k]]));
   writeFileSync(join(app, "www", "store-config.js"), "window.ATLAS_STORE = " + JSON.stringify(page) + ";\n");
   console.log("wrote www/store-config.js");
 } else if (target === "android") {
