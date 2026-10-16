@@ -1242,7 +1242,7 @@ const wrap = $("globeWrap"), canvas = $("globe"), ctx = canvas.getContext("2d"),
 const proj = d3.geoOrthographic().clipAngle(90).precision(0.35);
 const path = d3.geoPath(proj, ctx);
 const grat = d3.geoGraticule10(), sphere = {type:"Sphere"};
-const KMIN = 0.6, KMAX = 40;
+const KMIN = 0.6, KMAX = 7.5;
 let W = 0, H = 0, DPR = 1, baseScale = 180, cy0 = 0, k = 1, rot = [-32, -20, 0];
 let C = {}, hits = [], labelHits = [], pins = [], flight = null, needs = true, spinOn = !reduceMotion, spinning = spinOn, idleTimer = 0, lastTs = 0;
 
