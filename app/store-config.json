@@ -21,17 +21,17 @@
   "adsTesting": true,
   "admob": {
     "android": {
-      "appId": "ca-app-pub-3940256099942544~3347511713",
-      "banner": "ca-app-pub-3940256099942544/9214589741"
+      "appId": "ca-app-pub-3289890676732483~9090741080",
+      "banner": "ca-app-pub-3289890676732483/8358359327"
     },
     "ios": {
-      "appId": "ca-app-pub-3940256099942544~1458002511",
-      "banner": "ca-app-pub-3940256099942544/2435281174"
+      "appId": "ca-app-pub-3289890676732483~5815956467",
+      "banner": "ca-app-pub-3289890676732483/7480391922"
     }
   },
   "privacyUrl": "https://noahbush42276-ship-it.github.io/dateline-atlas/privacy.html",
   "supportUrl": "https://noahbush42276-ship-it.github.io/dateline-atlas/support.html",
   "termsUrl": "https://noahbush42276-ship-it.github.io/dateline-atlas/terms.html",
   "appleTermsUrl": "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/",
-  "_comment": "adsTesting true and Google's sample AdMob IDs until your own AdMob app and banner unit exist; then put yours here and set adsTesting to false."
+  "_comment": "Real AdMob IDs (Noah's account). adsTesting stays true during TestFlight and Play testing so testers see Google's test ads; set it to false for the production release."
 }
