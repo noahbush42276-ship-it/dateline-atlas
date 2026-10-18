@@ -1,0 +1,52 @@
+# Builds a sharper globe texture (and previews) from public-domain Natural Earth + NOAA ETOPO data.
+# Results are pushed to the "relief-assets" branch so they never bloat the site.
+name: Globe texture (relief)
+on:
+  workflow_dispatch:
+    inputs:
+      job:
+        description: "preview or tiles"
+        default: preview
+      mode:
+        description: "tiles only: plain or relief"
+        default: relief
+permissions:
+  contents: write
+jobs:
+  relief:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Libraries
+        run: pip install numpy pillow tifffile imagecodecs
+      - name: Cache the source data
+        uses: actions/cache@v4
+        with:
+          path: /tmp/relief-cache
+          key: relief-src-v1
+      - name: Build
+        run: |
+          mkdir -p out
+          if [ "${{ inputs.job }}" = "tiles" ]; then
+            python tools/relief/make_relief.py tiles out/tiles "${{ inputs.mode }}"
+          else
+            python tools/relief/make_relief.py preview out/preview earth-relief-4k.jpg
+          fi
+          du -sh out/*
+      - name: Push to the relief-assets branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898499+github-actions[bot]@users.noreply.github.com"
+          git fetch origin relief-assets || true
+          mv out /tmp/out
+          git checkout --orphan relief-work
+          git rm -rf -q . || true
+          if git rev-parse -q --verify origin/relief-assets >/dev/null; then git checkout origin/relief-assets -- . || true; fi
+          cp -r /tmp/out/* .
+          git add -A
+          git commit -q -m "Relief ${{ inputs.job }} ${{ inputs.mode }} (run ${{ github.run_number }})" || echo "nothing new"
+          git push -f origin HEAD:relief-assets
