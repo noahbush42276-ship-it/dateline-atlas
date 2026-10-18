@@ -578,11 +578,14 @@ details.method dd{margin:0}
   }
   const priceText = () => priceOf("monthly") + "/month or " + priceOf("yearly") + "/year";
 
-  /* ---------------- free tier: the ~80 most important live stories ---------------- */
+  /* ---------------- free tier: the 200 most important live stories ---------------- */
   function liveOk(e, now) { return e.expires > now && now - e.t <= A().KEEP_DAYS * DAY; }
+  /* shootings, bombings, terror and other attacks: always near the top of the free list while they're recent */
+  const ATTACK = /\b(active shooter|mass shooting|school shooting|shooting|shooter|gunman|gunmen|opened fire|hostages?|bombing|car bomb|suicide bomb\w*|stabbing|knife attack|terror attack|terrorist attack|ramming|massacre)\b/i;
   function freeRank(e, now) {
     const ageH = Math.max(0, (now - e.t) / 36e5);
-    return (e.priority ? 30 : 0) + e.prom + Math.min(e.outlets, 12) * 1.5 - Math.min(70, ageH * 0.3);
+    const alert = ATTACK.test(e.title + " " + e.summary) && ageH < 72 ? 60 : 0;
+    return (e.priority ? 30 : 0) + alert + e.prom + Math.min(e.outlets, 12) * 1.5 - Math.min(70, ageH * 0.3);
   }
   window.atlasTier = (all) => {
     if (owned) return all;
@@ -1155,7 +1158,7 @@ let feedOffline = false;
 const state = { events:new Map(), meta:null, dbState:"connecting", topic:"all", win:30, q:"", sort:"latest", newOnly:false, view:"globe", ptab:"stories", selected:null, detail:null, hover:null, depth:3 };
 window.atlasApp = { state, h, renderAll, live, shown, sweepTag, toast, TOPIC, STATUS, KEEP_DAYS, regionName, langName };
 { const dv = Number(store("atlasm-depth")); if (dv >= 1 && dv <= 5) state.depth = dv; }
-const MUST_SHOW = /\b(riot|riots|rioting|rioters|unrest|looting|war|wars|warfare|invasion|airstrikes?|shelling|ceasefire|truce|treaty|treaties|accord|peace (deal|talks|agreement)|armistice|trade (deal|agreement|pact)|tariffs?|sanctions?|inflation|recession|interest rates?|central bank|gdp|stock market|economy|economic)\b/i;
+const MUST_SHOW = /\b(riot|riots|rioting|rioters|unrest|looting|war|wars|warfare|invasion|airstrikes?|shelling|ceasefire|truce|treaty|treaties|accord|peace (deal|talks|agreement)|armistice|trade (deal|agreement|pact)|tariffs?|sanctions?|inflation|recession|interest rates?|central bank|gdp|stock market|economy|economic|active shooter|mass shooting|school shooting|shooting|shooter|gunman|gunmen|opened fire|hostages?|bombing|car bomb|suicide bomb\w*|stabbing|knife attack|terror attack|terrorist attack|ramming|massacre)\b/i;
 const REACH = {1:"Local", 2:"Regional", 3:"National", 4:"International"};
 const DEPTH = [null, {f:0.2, label:"Top stories"}, {f:0.4, label:"Major stories"}, {f:0.65, label:"Most stories"}, {f:0.85, label:"Nearly all"}, {f:1, label:"Everything, incl. local"}];
 function depthCut(list){
