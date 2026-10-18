@@ -75,83 +75,79 @@ def etopo(shape_hw):
     return np.asarray(im, dtype=np.float32)
 
 
-def hillshade(elev, exag, lat_rows):
-    """Multi-directional hillshade (0..1, 0.5 = flat) of an equirectangular elevation grid."""
+STRIP = 512
+
+
+def _hs_strip(elev, r0, r1, exag):
+    """Hillshade (0..1, 0.5 = flat) for rows r0..r1 of an equirectangular grid (uses one row above/below)."""
     h, w = elev.shape
+    a0, a1 = max(0, r0 - 1), min(h, r1 + 1)
+    e = elev[a0:a1]
     R = 6371000.0
-    dy = math.pi * R / h                                   # metres per row
-    coslat = np.cos(np.radians(lat_rows))[:, None].clip(0.05, 1)
-    dx = (2 * math.pi * R / w) * coslat                    # metres per column (shrinks toward the poles)
-    gy = (np.roll(elev, -1, 0) - np.roll(elev, 1, 0)) / (2 * dy)
-    gx = (np.roll(elev, -1, 1) - np.roll(elev, 1, 1)) / (2 * dx)
+    dy = math.pi * R / h
+    lat = 90 - (np.arange(a0, a1) + 0.5) * 180 / h
+    dx = (2 * math.pi * R / w) * np.cos(np.radians(lat)).clip(0.05, 1)[:, None]
+    gy = np.zeros_like(e); gy[1:-1] = (e[2:] - e[:-2]) / (2 * dy)
+    gx = (np.roll(e, -1, 1) - np.roll(e, 1, 1)) / (2 * dx)
     gx *= exag; gy *= exag
-    out = np.zeros_like(elev)
-    wsum = 0.0
+    n = np.sqrt(gx * gx + gy * gy + 1)
+    out = np.zeros_like(e); wsum = 0.0
     for az, alt, wt in ((315, 45, 0.5), (270, 50, 0.2), (0, 50, 0.15), (225, 55, 0.15)):
         a, b = math.radians(az), math.radians(alt)
         lx, ly, lz = math.sin(a) * math.cos(b), math.cos(a) * math.cos(b), math.sin(b)
-        n = np.sqrt(gx * gx + gy * gy + 1)
-        out += wt * ((-gx * lx + gy * ly + lz) / n)        # north is up (row 0), so +gy faces south
-        wsum += wt
+        out += wt * ((-gx * lx + gy * ly + lz) / n); wsum += wt
     out /= wsum
-    flat = math.sin(math.radians(48))
-    return np.clip(0.5 + (out - flat) * 0.9, 0, 1)
-
-
-def enhance(rgb, elev, strength=0.55, exag=6.0):
-    """Darken shadowed slopes / brighten lit slopes in proportion to real elevation change."""
-    h, w = elev.shape
-    lat = 90 - (np.arange(h) + 0.5) * 180 / h
-    hs = hillshade(elev, exag, lat)
-    land = (elev > 0).astype(np.float32)
-    # more effect on high, rugged ground; a little on the seafloor too
-    height_w = np.clip(elev / 2500.0, 0, 1) * 0.5 + 0.5
-    k = strength * land * height_w
-    f = 1 + (hs - 0.5) * 2 * k
-    out = np.asarray(rgb, dtype=np.float32) * f[..., None]
-    return Image.fromarray(np.clip(out, 0, 255).astype(np.uint8))
+    hs = np.clip(0.5 + (out - math.sin(math.radians(48))) * 0.9, 0, 1)
+    return hs[r0 - a0: r0 - a0 + (r1 - r0)]
 
 
 def ocean_lut(cur4k, elev4k):
     """Depth -> colour table taken from the app's current texture, so the seas keep the Atlas's deep blues."""
-    c = np.asarray(cur4k, dtype=np.float32).reshape(-1, 3)
+    c = np.asarray(cur4k, dtype=np.uint8).reshape(-1, 3)
     e = elev4k.reshape(-1)
-    bins = np.arange(0, 11100, 100)
-    lut = np.zeros((len(bins), 3), np.float32)
+    lut = np.zeros((111, 3), np.float32)
     last = np.array([170, 210, 230], np.float32)
-    for i, d in enumerate(bins):
+    for i in range(111):
+        d = i * 100
         m = (e <= -d) & (e > -d - 100)
         if m.sum() > 50:
-            last = np.median(c[m], axis=0)
+            last = np.median(c[m], axis=0).astype(np.float32)
         lut[i] = last
     return lut
 
 
-def base(ne, elev, cur4k):
-    """Natural Earth land at full resolution; seas recoloured by real depth in the current texture's palette,
-    with the seafloor ridges and trenches shaded."""
+def build(ne, elev, cur4k, relief, strength=0.55, exag=6.0):
+    """Natural Earth land at full resolution; seas recoloured by real depth in the current texture's palette
+    with seafloor shading; optionally an extra, exaggerated hillshade on land. Works in strips to save memory."""
+    from PIL import ImageFilter
     h, w = elev.shape
     e4 = np.asarray(Image.fromarray(elev, mode="F").resize(cur4k.size, Image.BILINEAR))
     lut = ocean_lut(cur4k, e4)
-    rgb = np.asarray(ne, dtype=np.float32)
-    depth = np.clip(-elev, 0, 11000) / 100.0
-    i0 = np.floor(depth).astype(int).clip(0, len(lut) - 1); i1 = (i0 + 1).clip(0, len(lut) - 1)
-    f = (depth - i0)[..., None]
-    sea = lut[i0] * (1 - f) + lut[i1] * f
-    lat = 90 - (np.arange(h) + 0.5) * 180 / h
-    hs = hillshade(elev, 18.0, lat)
-    sea *= (1 + (hs - 0.5) * 1.1)[..., None]
-    watery = (rgb[..., 2] > rgb[..., 0] + 12) & (elev < 0)       # Natural Earth paints it as water and it is below sea level
-    # soften the edge so coastlines stay smooth
-    m = Image.fromarray((watery * 255).astype(np.uint8)).filter(__import__("PIL.ImageFilter", fromlist=["x"]).GaussianBlur(1.2))
-    m = (np.asarray(m, np.float32) / 255.0)[..., None]
-    out = rgb * (1 - m) + sea * m
-    return Image.fromarray(np.clip(out, 0, 255).astype(np.uint8))
+    src = np.asarray(ne, dtype=np.uint8)
+    out = np.empty((h, w, 3), np.uint8)
+    for r0 in range(0, h, STRIP):
+        r1 = min(h, r0 + STRIP)
+        rgb = src[r0:r1].astype(np.float32)
+        el = elev[r0:r1]
+        depth = np.clip(-el, 0, 11000) / 100.0
+        i0 = np.floor(depth).astype(np.int32).clip(0, 110); i1 = (i0 + 1).clip(0, 110)
+        f = (depth - i0)[..., None]
+        sea = lut[i0] * (1 - f) + lut[i1] * f
+        sea *= (1 + (_hs_strip(elev, r0, r1, 18.0) - 0.5) * 1.1)[..., None]
+        watery = ((rgb[..., 2] > rgb[..., 0] + 12) & (el < 0)).astype(np.uint8) * 255
+        m = np.asarray(Image.fromarray(watery).filter(ImageFilter.GaussianBlur(1.2)), np.float32)[..., None] / 255.0
+        px = rgb * (1 - m) + sea * m
+        if relief:
+            land = (el > 0).astype(np.float32)
+            k = strength * land * (np.clip(el / 2500.0, 0, 1) * 0.5 + 0.5)
+            px *= (1 + (_hs_strip(elev, r0, r1, exag) - 0.5) * 2 * k)[..., None]
+        out[r0:r1] = np.clip(px, 0, 255).astype(np.uint8)
+    return Image.fromarray(out)
 
 
 # ------------------------------------------------------------------ orthographic renderer (same math as the app's shader)
 def render(tex, lon0, lat0, R, W=1080, H=1400):
-    t = np.asarray(tex, dtype=np.float32)
+    t = np.asarray(tex)
     th, tw = t.shape[:2]
     ys, xs = np.mgrid[0:H, 0:W].astype(np.float32)
     sx = (xs - W / 2) / R
@@ -172,8 +168,9 @@ def render(tex, lon0, lat0, R, W=1080, H=1400):
     fu = (u - u0)[..., None]; fv = (v - v0)[..., None]
     u1 = (u0 + 1) % tw; u0 %= tw
     v0c = v0.clip(0, th - 1); v1c = (v0 + 1).clip(0, th - 1)
-    c = (t[v0c, u0] * (1 - fu) * (1 - fv) + t[v0c, u1] * fu * (1 - fv)
-         + t[v1c, u0] * (1 - fu) * fv + t[v1c, u1] * fu * fv)
+    g = lambda a, b: t[a, b].astype(np.float32)
+    c = (g(v0c, u0) * (1 - fu) * (1 - fv) + g(v0c, u1) * fu * (1 - fv)
+         + g(v1c, u0) * (1 - fu) * fv + g(v1c, u1) * fu * fv)
     c *= (0.72 + 0.28 * np.clip(X / 0.6, 0, 1))[..., None]
     bg = np.array([12, 17, 23], np.float32)
     c = np.where(inside[..., None], c, bg)
@@ -206,8 +203,9 @@ def preview(out, current_4k):
     ne0 = natural_earth()
     elev = etopo((ne0.height, ne0.width))
     cur = Image.open(current_4k).convert("RGB")
-    ne = base(ne0, elev, cur)
-    rich = enhance(ne, elev)
+    ne = build(ne0, elev, cur, False)
+    rich = build(ne0, elev, cur, True)
+    del ne0
     meta = []
     for name, lon, lat, k, title in VIEWS:
         R = BASE_R * k
@@ -229,9 +227,8 @@ def tiles(out, mode):
     os.makedirs(out, exist_ok=True)
     ne0 = natural_earth()
     elev = etopo((ne0.height, ne0.width))
-    full = base(ne0, elev, Image.open(os.environ.get("CURRENT_4K", "earth-relief-4k.jpg")).convert("RGB"))
-    if mode == "relief":
-        full = enhance(full, elev)
+    full = build(ne0, elev, Image.open(os.environ.get("CURRENT_4K", "earth-relief-4k.jpg")).convert("RGB"), mode == "relief")
+    del ne0, elev
     big = full.resize((16384, 8192), Image.LANCZOS)
     full.resize((4096, 2048), Image.LANCZOS).save(os.path.join(out, "earth-relief-4k.jpg"), quality=86)
     full.resize((2048, 1024), Image.LANCZOS).save(os.path.join(out, "earth-relief-2k.jpg"), quality=86)
