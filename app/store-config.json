@@ -1,7 +1,7 @@
 {
   "appId": "io.github.noahbush42276.datelineatlas",
   "appName": "Dateline Atlas",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "freeStories": 200,
   "premium": {
     "android": {
