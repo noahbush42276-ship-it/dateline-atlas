@@ -106,9 +106,46 @@ def enhance(rgb, elev, strength=0.55, exag=6.0):
     land = (elev > 0).astype(np.float32)
     # more effect on high, rugged ground; a little on the seafloor too
     height_w = np.clip(elev / 2500.0, 0, 1) * 0.5 + 0.5
-    k = strength * (land * height_w + (1 - land) * 0.35)
+    k = strength * land * height_w
     f = 1 + (hs - 0.5) * 2 * k
     out = np.asarray(rgb, dtype=np.float32) * f[..., None]
+    return Image.fromarray(np.clip(out, 0, 255).astype(np.uint8))
+
+
+def ocean_lut(cur4k, elev4k):
+    """Depth -> colour table taken from the app's current texture, so the seas keep the Atlas's deep blues."""
+    c = np.asarray(cur4k, dtype=np.float32).reshape(-1, 3)
+    e = elev4k.reshape(-1)
+    bins = np.arange(0, 11100, 100)
+    lut = np.zeros((len(bins), 3), np.float32)
+    last = np.array([170, 210, 230], np.float32)
+    for i, d in enumerate(bins):
+        m = (e <= -d) & (e > -d - 100)
+        if m.sum() > 50:
+            last = np.median(c[m], axis=0)
+        lut[i] = last
+    return lut
+
+
+def base(ne, elev, cur4k):
+    """Natural Earth land at full resolution; seas recoloured by real depth in the current texture's palette,
+    with the seafloor ridges and trenches shaded."""
+    h, w = elev.shape
+    e4 = np.asarray(Image.fromarray(elev, mode="F").resize(cur4k.size, Image.BILINEAR))
+    lut = ocean_lut(cur4k, e4)
+    rgb = np.asarray(ne, dtype=np.float32)
+    depth = np.clip(-elev, 0, 11000) / 100.0
+    i0 = np.floor(depth).astype(int).clip(0, len(lut) - 1); i1 = (i0 + 1).clip(0, len(lut) - 1)
+    f = (depth - i0)[..., None]
+    sea = lut[i0] * (1 - f) + lut[i1] * f
+    lat = 90 - (np.arange(h) + 0.5) * 180 / h
+    hs = hillshade(elev, 18.0, lat)
+    sea *= (1 + (hs - 0.5) * 1.1)[..., None]
+    watery = (rgb[..., 2] > rgb[..., 0] + 12) & (elev < 0)       # Natural Earth paints it as water and it is below sea level
+    # soften the edge so coastlines stay smooth
+    m = Image.fromarray((watery * 255).astype(np.uint8)).filter(__import__("PIL.ImageFilter", fromlist=["x"]).GaussianBlur(1.2))
+    m = (np.asarray(m, np.float32) / 255.0)[..., None]
+    out = rgb * (1 - m) + sea * m
     return Image.fromarray(np.clip(out, 0, 255).astype(np.uint8))
 
 
@@ -166,10 +203,11 @@ def label(im, text):
 
 def preview(out, current_4k):
     os.makedirs(out, exist_ok=True)
-    ne = natural_earth()
-    elev = etopo((ne.height, ne.width))
-    rich = enhance(ne, elev)
+    ne0 = natural_earth()
+    elev = etopo((ne0.height, ne0.width))
     cur = Image.open(current_4k).convert("RGB")
+    ne = base(ne0, elev, cur)
+    rich = enhance(ne, elev)
     meta = []
     for name, lon, lat, k, title in VIEWS:
         R = BASE_R * k
@@ -189,10 +227,11 @@ def preview(out, current_4k):
 
 def tiles(out, mode):
     os.makedirs(out, exist_ok=True)
-    ne = natural_earth()
-    full = ne
+    ne0 = natural_earth()
+    elev = etopo((ne0.height, ne0.width))
+    full = base(ne0, elev, Image.open(os.environ.get("CURRENT_4K", "earth-relief-4k.jpg")).convert("RGB"))
     if mode == "relief":
-        full = enhance(ne, etopo((ne.height, ne.width)))
+        full = enhance(full, elev)
     big = full.resize((16384, 8192), Image.LANCZOS)
     full.resize((4096, 2048), Image.LANCZOS).save(os.path.join(out, "earth-relief-4k.jpg"), quality=86)
     full.resize((2048, 1024), Image.LANCZOS).save(os.path.join(out, "earth-relief-2k.jpg"), quality=86)
