@@ -1,0 +1,37 @@
+[
+ {
+  "name": "himalaya",
+  "title": "Himalayas and Mount Everest",
+  "lon": 86.9,
+  "lat": 28.6,
+  "zoom": 7.5
+ },
+ {
+  "name": "alps",
+  "title": "The Alps",
+  "lon": 8.6,
+  "lat": 46.2,
+  "zoom": 7.5
+ },
+ {
+  "name": "andes",
+  "title": "The Andes (Atacama)",
+  "lon": -69.5,
+  "lat": -24.0,
+  "zoom": 7.5
+ },
+ {
+  "name": "rockies",
+  "title": "The Rocky Mountains",
+  "lon": -107.5,
+  "lat": 39.5,
+  "zoom": 7.5
+ },
+ {
+  "name": "mideast",
+  "title": "Middle East, medium zoom",
+  "lon": 44.0,
+  "lat": 32.0,
+  "zoom": 3.5
+ }
+]
